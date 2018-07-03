@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'webfont';
+  src: url('./schema/fonts/fonts/fontawesome-webfont.woff') format('woff'),
+        url('./schema/fonts/fonts/fontawesome-webfont.svg') format('svg'),
+        url('./schema/fonts/fonts/fontawesome-webfont.ttf') format('truetype');
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'webfont';
+}
