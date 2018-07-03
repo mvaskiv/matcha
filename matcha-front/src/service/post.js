@@ -1,5 +1,5 @@
 export function PostData(type, data) {
-    let BaseURL = 'http://localhost:8080/Matcha/api/';
+    let BaseURL = 'http://localhost:8100/routes.php';
     return new Promise((resolve, reject) => {
         fetch(BaseURL+type, {
             method: 'POST',

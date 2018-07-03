@@ -1,14 +1,28 @@
 <?php
+use \Psr\Http\Message\ServerRequestInterface as Request;
+use \Psr\Http\Message\ResponseInterface as Response;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
+require '../vendor/autoload.php';
 
-// Routes
+$config['displayErrorDetails'] = true;
+$config['addContentLengthHeader'] = false;
 
-$app->get('/[{name}]', function (Request $request, Response $response, array $args) {
-    // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
+$config['db']['host']   = 'localhost';
+$config['db']['user']   = 'root';
+$config['db']['pass']   = '459512144';
+$config['db']['dbname'] = 'match';
 
-    // Render index view
-    return $this->renderer->render($response, 'index.phtml', $args);
+$app = new \Slim\App(['settings' => $config]);
+
+$app->post('/login', function (Request $request, Response $response, array $args) {
+    $data = $request->getParsedBody();
+    $mysql_data = [];
+    $mysql_data['login'] = filter_var($data['login'], FILTER_SANITIZE_STRING);
+    $mysql_data['password'] = filter_var($data['password'], FILTER_SANITIZE_STRING);
+
+    //$response->getBody()->write("Hello, ".$mysql_data['login'].", ".$mysql_data['password']);
+    $rt = array('name' => 'Bob', 'age' => 40);
+    //$newResponse = $oldResponse->withJson($data);
+    return $response->withJson($data);
 });
+$app->run();
