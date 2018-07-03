@@ -20,6 +20,7 @@ class Login extends Component {
                 if (responseJson.data) {
                     sessionStorage.setItem('udata', JSON.stringify(responseJson));
                     this.setState({redirectToReferrer: true});
+                    alert(sessionStorage.getItem('udata'));
                 }
             });
         }
@@ -31,7 +32,8 @@ class Login extends Component {
 
     render() {
         if (this.state.redirectToReferrer || sessionStorage.getItem('udata')) {
-            return (<Redirect to={'/Home'} />)
+            // return (<Redirect to={'/Home'} />)
+            
         }
         return (
             <div id="login">
