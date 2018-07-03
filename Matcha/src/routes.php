@@ -23,6 +23,6 @@ $app->post('/login', function (Request $request, Response $response, array $args
     //$response->getBody()->write("Hello, ".$mysql_data['login'].", ".$mysql_data['password']);
     $rt = array('name' => 'Bob', 'age' => 40);
     //$newResponse = $oldResponse->withJson($data);
-    return $response->withJson($data);
+    return $response->withJson($rt);
 });
 $app->run();

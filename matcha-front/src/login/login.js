@@ -17,7 +17,7 @@ class Login extends Component {
         if(this.state.username && this.state.password) {
             PostData('login', this.state).then((result) => {
                 let responseJson = result;
-                if (responseJson.data) {
+                if (responseJson.name) {
                     sessionStorage.setItem('udata', JSON.stringify(responseJson));
                     this.setState({redirectToReferrer: true});
                     alert(sessionStorage.getItem('udata'));
@@ -33,7 +33,7 @@ class Login extends Component {
     render() {
         if (this.state.redirectToReferrer || sessionStorage.getItem('udata')) {
             // return (<Redirect to={'/Home'} />)
-            
+
         }
         return (
             <div id="login">
