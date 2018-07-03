@@ -49,7 +49,7 @@ const Register = (props) => (
         <input className="register_small_input desk" type="text" placeholder="Last name" name="last" id="register-last" minLength="3" maxLength="32" pattern="[a-ZA-Z]+" required></input>
         <span id="blue_text">And your email here</span>
         <input className="register_input desk" type="email" placeholder="Email" name="email" id="register-email" minLength="5" maxLength="32" required></input>
-        <button className="btn btn-success">Register</button>
+        <button className="btn btn-success">Success</button>
     </form>
   </div>
 );
