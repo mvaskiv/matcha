@@ -1,0 +1,21 @@
+.Intro {
+  position: relative;
+  top: 7em;
+  margin-left: auto;
+  margin-right: auto;
+  width: 85vw;
+  /* text-align: center; */
+  padding: 15px;
+  background-color: rgba(250,250,250,0.95);
+  border-radius: 7px;
+  box-shadow: 1px 1px 57px rgba(29,29,29,0.3);
+}
+.welcome-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url('../assets/bg/almost-a-kiss.jpg') no-repeat center;
+  background-size: cover;
+}

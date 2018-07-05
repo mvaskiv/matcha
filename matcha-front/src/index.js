@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import './schema/css/schema.min.css';
+import './style/main.css';
+import './style/compli.css';
 import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 
