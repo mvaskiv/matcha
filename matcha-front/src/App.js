@@ -4,51 +4,58 @@ import createReactClass from 'create-react-class';
 import logo from './logo.svg';
 import './App.css';
 
-import Login from './auth/login.js';
-import Register from './auth/register';
+import LoginForm from './auth/login.js';
+import RegisterForm from './auth/register';
 import Welcome from './view/welcome';
 
 const Header = ({ title }) => (
-  <div className="App">
-    <div className="App-header">
-      <img src={logo} className="App-logo" alt="logo" />
-      <h2>{title}</h2>
-    </div>
-  </div>
-);
-
-const Page = ({ title }) => (
-  <div className="App">
-    <p>
-      <Link to="/">Home</Link>
-    </p>
-    <p>
-      <Link to="/about">About</Link>
-    </p>
-    <p>
-      <Link to="/settings">Settings</Link>
-    </p>
-    <p>
-      <Link to="/asda">asda</Link>
-    </p>
+  <div className="welcome-signin posa full" id='header'>
+    <a href="/login"><button className="btn btn-pill btn-danger flr mar5">Log in</button></a>
+    <a href="/"><p className='logo fll mar5'>matcha</p></a>
   </div>
 );
 
 const Home = (props) => (
-  <Welcome />
+  <div>
+  <div className="welcome-bg"></div>
+  <div>
+    <Header />
+    <Welcome />
+  </div>
+  </div>
+);
+
+const Register = (props) => (
+  <div>
+  <div className="welcome-bg"></div>
+  <div>
+    <Header />
+    <RegisterForm />
+  </div>
+  </div>
+);
+
+const Login = (props) => (
+  <div>
+  <div className="welcome-bg"></div>
+  <div>
+    <Header />
+    <LoginForm />
+  </div>
+  </div>
 );
 
 const About = (props) => (
 <div>
   <Header title = "About" />
-  <Page/>
+
 </div>
 );
 
 const Settings = (props) => (
 <div>
   <Header title = "Settings" />
-  <Page/>
+
 </div>
 );
 
@@ -57,7 +64,7 @@ const User = createReactClass ({
     return (
     <div>
       <Header title={this.props.params.username} />
-        <Page />
+
     </div>
     );
   }
@@ -76,6 +83,7 @@ render() {
       <Route path="/" component={Home}/>
       <Route path="/about" component={About}/>
       <Route path="/settings" component={Settings}/>
+      <Route path="/login" component={Login}/>
       <Route path="/register" component={Register}/>
       <Route path="/users" component={allUsers}/>
       <Route path="/user" component={allUsers}/>

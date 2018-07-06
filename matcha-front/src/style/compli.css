@@ -1,3 +1,4 @@
+/* POSITIONING */
 .rel {
   position: relative!important;
 }
@@ -24,13 +25,26 @@
 .flr {
   float: right!important;
 }
+
+
+/* SIZE */
 .full {
   width: 100%!important;
 }
-
 .half {
   width: 50%!important;
 }
 .third {
   width: 33%!important;
+}
+
+/* INPUT */
+.input-ln {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+/* TEXT */
+.tdk {
+  color: #292929!important;
 }

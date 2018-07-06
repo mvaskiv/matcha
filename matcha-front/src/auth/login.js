@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { PostData } from '../service/post.js';
 import { Redirect } from 'react-router';
 
-class Login extends Component {
+class LoginForm extends Component {
     constructor() {
         super();
         this.state = {
@@ -36,18 +36,15 @@ class Login extends Component {
 
         }
         return (
-            <div id="login">
-                <h2>Login or Register</h2>
-                <label>Username</label>
-                <input type="text" name="username" placeholder="Name" onChange={this.onChange}></input>
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Password" onChange={this.onChange}></input>
-                <br /><br />
-                <button className="btn btn-primary" onClick={this.login}>Log In</button>&nbsp;
-                <a href="/register"><button className="btn btn-success">Register</button></a>
+            <div className="Intro">
+                <a href="/"><i className="far fa-times-circle flr mar5 close"></i></a>
+                <h3>&nbsp;Welcome back</h3><br />
+                    <input type="text" className='form-element full input-ln' placeholder="Your email or login" name='username' onChange={this.onChange}/>
+                    <input type="password" className='form-element full input-ln' placeholder="Your password" name='password' onChange={this.onChange}/>
+                <button className="btn btn-primary full" onClick={this.login}>Enter</button>
             </div>
         );
     }
 }
 
-export default Login;
+export default LoginForm;
