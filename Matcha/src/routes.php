@@ -12,7 +12,18 @@ $config['db']['user']   = 'root';
 $config['db']['pass']   = '459512144';
 $config['db']['dbname'] = 'match';
 
-$app = new \Slim\App(['settings' => $config]);
+$config = [
+    'settings' => [
+        'displayErrorDetails' => true,
+
+        'logger' => [
+            'name' => 'slim-app',
+            'level' => Monolog\Logger::DEBUG,
+            'path' => __DIR__ . '/../logs/app.log',
+        ],
+    ],
+];
+$app = new \Slim\App($config);
 
 $app->post('/login', function (Request $request, Response $response, array $args) {
     $data = $request->getParsedBody();
@@ -25,4 +36,6 @@ $app->post('/login', function (Request $request, Response $response, array $args
     //$newResponse = $oldResponse->withJson($data);
     return $response->withJson($rt);
 });
+
+$app->post('/registation', );
 $app->run();
