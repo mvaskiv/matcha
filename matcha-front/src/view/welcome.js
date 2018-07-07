@@ -29,11 +29,7 @@ class Welcome extends Component {
         this.expand = this.expand.bind(this);
         this.onChange = this.onChange.bind(this);
     }
-    // componentDidMount() {
-    //     requestAnimationFrame(() => {
-    //         this.setState({ show: true });
-    //     });
-    // }
+
     register() {
         if (this.state.firstname && this.state.password) {
             PostData('register', this.state).then((result) => {
@@ -47,6 +43,7 @@ class Welcome extends Component {
         }
         
     }
+
     expand() {
         if (this.state.firstname) {
             this.setState({submit:true});
@@ -152,7 +149,6 @@ class Welcome extends Component {
                       </select>
                       <input type="number" className="form-element half" placeholder="1" name="day" onChange={this.onChange}/>
                   </div>
-                
                 <button className="btn btn-success full" onClick={this.expand}>Register</button>
               </div>
             </div>
