@@ -1,4 +1,4 @@
-<?php
+<!-- <?php
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
@@ -38,4 +38,4 @@ $app->post('/login', function (Request $request, Response $response, array $args
 });
 
 $app->post('/registation', );
-$app->run();
+$app->run(); -->
