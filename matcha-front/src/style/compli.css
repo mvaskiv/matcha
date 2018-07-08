@@ -5,6 +5,9 @@
 .posa {
   position: absolute;
 }
+.fxd {
+  position: fixed;
+}
 .pad10 {
   padding: 10px;
 }

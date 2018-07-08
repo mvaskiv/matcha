@@ -82,13 +82,27 @@
 }
 .close-noti {
   font-size: 1.4em;
-  line-height: 3.7em;
+  line-height: 3.5em;
   padding-right: 0.5em;
   /* margin-top: 2.05em!important; */
 }
 #header {
   position: fixed!important;
   top: 0;
+}
+.container {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0px;
+  left: 0px;
+  overflow: hidden;
+}
+.content {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  transition: 0.4s ease-in-out;
 }
 .topbar {
   position: absolute;
@@ -98,14 +112,24 @@
   height: 3em;
   background-color: rgba(250,250,250,0.95);
 }
+.menus-panel {
+  position: fixed;
+  width: 100vw;
+
+  /* bottom: -50vh; */
+  background-color: #fff;
+  transition: 0.4s ease-in-out;
+  z-index: 3;
+}
 .menubar {
   position: absolute;
-  bottom: 0px;
+  top: -3em;
   left: 0px;
   width: 100vw;
   height: 3em;
   background-color: rgba(250,250,250,0.95);
   text-align: center;
+  z-index: 4;
 }
 .topbar i {
   font-size: 1.5em;
@@ -118,13 +142,20 @@
   padding-right: 2.5vw;
 }
 .search-btn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
   margin-top: -0.8em;
-  font-size: 1.5em!important;
-  line-height: 2.9em!important;
+  font-size: 1.2em!important;
+  line-height: 3.9em!important;
   color: #fff;
-  background-color: rgba(200,100,100,0.95);
-  width: 3em;
-  height: 3em;
+  background: linear-gradient(to top, rgba(200,100,100,0) 17%, rgba(200,100,100,1) 10%);
+  width: 4em;
+  max-width: 5em;
+  height: 4em;
+  max-height: 5em;
   border-radius: 360px;
 }
 
@@ -132,24 +163,38 @@
 .main-center {
   position: relative;
   top: 0;
-  left: 200%;
+  /* left: 200%; */
   width: 100vw;
   height: 100vh;
   transition: 0.4s ease-in-out;
   overflow: hidden;
+}
+.menu-nav {
+  position: sticky;
+  top: 0px;
+  /* padding-top: 1em; */
+  width: 100vw;
+  height: 5em;
+  /* background: linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 20%); */
+  background: #fff;
+  box-shadow: 1px 2px 5px #aaa;
+  z-index: 3;
 }
 
 .noti-panel {
   position: absolute;
   top: 0;
   left: 0;
+  /* padding-top: 1em; */
   width: 100vw;
   height: 100vh;
-  background-color: rgba(250,250,250,0.95);
+  background-color: rgb(255, 255, 255);
+  overflow-x: scroll;
+  
   z-index: 2;
 }
 .noti-panel-cnt {
-  position: fixed;
+  position: absolute;
   top: 0px;
   left: 100%;
   width: 100vw;
@@ -158,7 +203,75 @@
   z-index: 1;
 }
 
+.showAllUsers {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  padding-top: 5em;
+  padding-bottom: 4em;
+  top: 3em;
+  left: 0;
+  overflow-y: scroll;
+}
 
+.user-avatar {
+  float: left;
+  width: 25vw;
+  height: 25vw;
+  position: relative;
+  top: -70px;
+  margin: 4.1vw;
+  border-color: #292929;
+  border-style: solid;
+  border-radius: 360px;
+  border-width: 1px;
+  background-color: #eee;
+}
+
+.message-header {
+  position: relative;
+  top: 0px;
+  right: 2vw;
+  left: 2vw;
+  margin-bottom: -1px;
+  width: 96vw;
+  height: 5em;
+  border-left: 0px;
+  border-right: 0px;
+  border-top: 1px;
+  border-bottom: 1px;
+  border-color: #aaa;
+  border-style: solid;
+}
+
+.usr-thumb-sm {
+  position: absolute;
+  left: 0px;
+  height: 5em;
+  width: 5em;
+  z-index: 1;
+}
+
+.message-prev {
+  position: absolute;
+  left: 0px;
+  padding-left: 6em;
+  width: 100%;
+  height: 5em;
+  z-index: 0;
+  overflow: hidden;
+}
+img.usr-thumb-pic-sm {
+  position: absolute;
+  top: 0.5em;
+  width: 4em;
+  height: 4em;
+}
+span.message-prev {
+  width: 100%;
+  height: 4.5em;
+  padding-top: 0.5em;
+}
 
 /* TESTS */
 

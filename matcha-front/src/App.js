@@ -53,18 +53,12 @@ const About = (props) => (
 </div>
 );
 
-const Settings = (props) => (
-<div>
-  
-
-</div>
-);
 
 const User = createReactClass ({
   render () {
     return (
     <div>
-      
+      <h2>{this.props.username}</h2>
 
     </div>
     );
@@ -78,20 +72,26 @@ const allUsers = createReactClass ({
 });
 
 class App extends Component {
-render() {
-  return (
-    <Router history={browserHistory}>
-      <Route path="/" component={Main}/>
-      <Route path="/welcome" component={Home}/>
-      <Route path="/about" component={About}/>
-      <Route path="/settings" component={Settings}/>
-      <Route path="/login" component={Login}/>
-      <Route path="/register" component={Register}/>
-      <Route path="/users" component={allUsers}/>
-      <Route path="/user" component={allUsers}/>
-      <Route path="/:username" component={User}/>
-    </Router>
-  );
+  constructor() {
+    super();
+    this.state = {
+      loggedin: false
+    };
+  }
+
+  render() {
+    return (
+      <Router history={browserHistory}>
+        <Route path="/" component={Main} history={browserHistory}/>
+        <Route path="/welcome" component={Home}/>
+        <Route path="/about" component={About}/>
+        <Route path="/login" component={Login}/>
+        <Route path="/register" component={Register}/>
+        <Route path="/users" component={allUsers}/>
+        <Route path="/user" component={allUsers}/>
+        <Route path="/:username" component={User}/>
+      </Router>
+    );
 }
 }
 
