@@ -1,3 +1,3 @@
 <?php
 
-$app->get('/registration', 'RegistrationController:insert');
+$app->post('/registration', 'RegistrationController:insert');

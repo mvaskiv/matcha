@@ -7,9 +7,10 @@ $password = '459512144';
   $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   $conn->exec("CREATE DATABASE IF NOT EXISTS matcha_db;");
   $conn->exec("Use matcha_db;");
-  $conn->exec("CREATE TABLE `User` (f_name VARCHAR(15), l_name VARCHAR(15),
-      u_name VARCHAR(15), gender ENUM('M', 'F'), sex_preference ENUM('M', 'F'),
-       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, biography VARCHAR(8064))");
+  $conn->exec("CREATE TABLE `User` (`f_name` VARCHAR(15), `l_name` VARCHAR(15),
+      `u_name` VARCHAR(15), `gender` ENUM('M', 'F'), `sex_preference` ENUM('M', 'F'),
+       `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `biography` TEXT, `tags` TEXT,
+       `email` VARCHAR(20), `password` VARCHAR(50), `date` DATE)");
   echo "Connection sucssec\n";
 } catch (PDOException $e) {
   echo 'Conection is fail ' . $e->getMessage();
