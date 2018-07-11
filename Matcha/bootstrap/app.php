@@ -32,4 +32,8 @@ $container['RegistrationController'] = function($container){
   return new \App\Controllers\RegistrationController;
 };
 
+$container['LoginController'] = function($container){
+  return new \App\Controllers\LoginController;
+};
+
 require_once __DIR__.'/../app/routes.php';

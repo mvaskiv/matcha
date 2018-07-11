@@ -24,7 +24,7 @@ class RegistrationController extends BasicMysqlController {
         $this->parse();
         $this->exec();
       }
-      return json_encode($this->rt);;
+      return json_encode($this->rt);
     }
 
     private function parse(){
@@ -53,7 +53,7 @@ class RegistrationController extends BasicMysqlController {
     private function exec(){
       $stmt = $this->conn->prepare("INSERT INTO `user` (`f_name`, `l_name`, `u_name`,
                   `gender`, `sex_preference`, `biography`, `tags`, `email`,
-                   `password`, `date`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");            
+                   `password`, `date`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       $stmt->execute([$this->f_name, $this->l_name, $this->u_name,
                   $this->gender, $this->sex_preference, $this->biography,
                   $this->tags, $this->email, $this->psw, $this->date]);
