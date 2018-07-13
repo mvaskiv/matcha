@@ -2,9 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Controllers\BasicMysqlController;
+use PDO;
 
-class RegistrationController extends BasicMysqlController {
+class RegistrationController{
     private $parsedBody;
     private $f_name;
     private $l_name;
@@ -17,8 +17,18 @@ class RegistrationController extends BasicMysqlController {
     private $psw;
     private $date;
     private $rt = array();
+    protected $dsn = 'mysql:host=localhost;dbname=matcha_db';
+    protected $user = 'root';
+    protected $password = '459512144';
+    protected $conn;
+
+    protected function init(){
+      $this->conn = new PDO($this->dsn, $this->user, $this->password);
+      $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
 
     public function insert($request, $response){
+      $this->init();
       $this->parsedBody = $request->getParsedBody();
       if ($this->ifis()){
         $this->parse();
@@ -80,7 +90,7 @@ class RegistrationController extends BasicMysqlController {
 
     private function notexist(){
 
-      $stmt = $this->conn->prepare("SELECT * FROM User WHERE email = ?");
+      $stmt = $this->conn->prepare("SELECT * FROM user WHERE email = ?");
 
       $email = $this->parsedBody['email'];
       if ($stmt->execute([$email])){
