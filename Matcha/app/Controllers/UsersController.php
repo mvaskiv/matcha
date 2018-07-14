@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BasicToken;
 use PDO;
 
-class LoginController extends BasicToken {
+class UsersController extends BasicToken {
   private $rt = array();
   private $parsedBody;
   protected $conn;
@@ -17,20 +17,16 @@ class LoginController extends BasicToken {
   }
 
   public function insert($request, $response){
-    $this->parsedBody = $request->getParsedBody();
     $this->init();
-    if (!isset($this->parsedBody['login']) || !isset($this->parsedBody['password'])){
-      $this->rt['status'] = 'ko';
-      $this->rt['error'] = 'no login or password';
-      return json_encode($this->rt);
+    foreach ($conn->query($sql) as $row) {
+
     }
-    if ($this->exec())
-      $this->rt['status'] = 'ok';
+    $this->rt['status'] = 'ko';
     return json_encode($this->rt);
   }
 
   private function exec(){
-    $stmt = $this->conn->prepare("SELECT * FROM user WHERE `email` = ? OR `u_name` = ?");
+    $stmt = $this->conn->prepare("SELECT * FROM user");
     $login = $this->parsedBody['login'];
     if ($stmt->execute([$login, $login])){
       $row = $stmt->fetch();
@@ -38,16 +34,11 @@ class LoginController extends BasicToken {
         $this->rt['status'] = 'ko';
         $this->rt['error'] = 'no user';
         return false;
-    }
-    else if (hash('ripemd160', $this->parsedBody['password']) != $row['password']){
-      $this->rt['status'] = 'ko';
-      $this->rt['error'] = 'password dose not match';
-      return false;
+      }
     }
   }
+  unset($row['password']);
+  array_push($this->rt, $row);
   $this->rt['status'] = 'ok';
-  $this->rt['token'] = $this->generate($login);
   return true;
-}
-
 }

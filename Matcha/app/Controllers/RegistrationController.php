@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use PDO;
+use App\sqlconf;
+
 
 class RegistrationController{
     private $parsedBody;
@@ -17,13 +19,11 @@ class RegistrationController{
     private $psw;
     private $date;
     private $rt = array();
-    protected $dsn = 'mysql:host=localhost;dbname=matcha_db';
-    protected $user = 'root';
-    protected $password = '459512144';
     protected $conn;
 
     protected function init(){
-      $this->conn = new PDO($this->dsn, $this->user, $this->password);
+      $var = require_once 'sqlconf.php';
+      $this->conn = new PDO($var['dsn'], $var['user'], $var['password']);
       $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
