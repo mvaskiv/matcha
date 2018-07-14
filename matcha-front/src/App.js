@@ -5,7 +5,7 @@ import logo from './logo.svg';
 import './App.css';
 
 import LoginForm from './auth/login.js';
-import RegisterForm from './auth/register';
+// import RegisterForm from './auth/register';
 import Welcome from './view/welcome';
 import Main from './view/main';
 
@@ -26,15 +26,15 @@ const Home = (props) => (
   </div>
 );
 
-const Register = (props) => (
-  <div>
-  <div className="welcome-bg"></div>
-  <div>
-    <LoginHeader />
-    <RegisterForm />
-  </div>
-  </div>
-);
+// const Register = (props) => (
+//   <div>
+//   <div className="welcome-bg"></div>
+//   <div>
+//     <LoginHeader />
+//     <RegisterForm />
+//   </div>
+//   </div>
+// );
 
 const Login = (props) => (
   <div>
@@ -82,11 +82,11 @@ class App extends Component {
   render() {
     return (
       <Router history={browserHistory}>
-        <Route path="/" component={Main} history={browserHistory}/>
+        <Route path="/" component={Home} history={browserHistory}/>
         <Route path="/welcome" component={Home}/>
         <Route path="/about" component={About}/>
         <Route path="/login" component={Login}/>
-        <Route path="/register" component={Register}/>
+        {/* <Route path="/register" component={Register}/> */}
         <Route path="/users" component={allUsers}/>
         <Route path="/user" component={allUsers}/>
         <Route path="/:username" component={User}/>

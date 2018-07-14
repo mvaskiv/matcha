@@ -149,7 +149,6 @@ class Main extends Component {
                         <TopBar return={ this.state.viewProfile } />
                         <MainView item={ this.state.display } profile={ this.state.viewProfile } />
                     </div>
-                    
                 </div>
                 <div className='noti-panel-cnt' style={{transform: this.state.showMessages ? 'translateX(-100%)' : 'translateX(0%)'}}>
                     <Messages />
@@ -299,11 +298,11 @@ class Chat extends Messages {
     }
 
     componentDidMount() {
-        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        this.msglst.lastChild.scrollIntoView(!0, {behavior: 'smooth'});
     }
 
     componentDidUpdate() {
-        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        this.msglst.lastChild.scrollIntoView(!0, {behavior: 'smooth'});
     }
 
     onChange(e) {
