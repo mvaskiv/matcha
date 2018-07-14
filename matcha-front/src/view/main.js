@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Router, browserHistory, Route, Link } from 'react-router';
 import { PostData } from '../service/post.js';
-import { Redirect } from 'react-router';
+import { Redirect } from 'react-router-dom';
 // import UserThumb from '../parts/userThumb';
 // import NotificationPreview from '../parts/notification';
 // import Umessage from '../parts/umessage';
@@ -412,10 +412,26 @@ class Profile extends Main {
         super();
         this.state = {
             edit: false,
-            name: "Jane",
-            age: 23
+            id: '',
+            token: ''
         }
     }
+
+    getInfo() {
+        // if (this.state.f_name && this.state.password) {
+        //     this.state.date = this.state.year + '-' + this.state.month + '-' + this.state.day;
+            this.setState({id: sessionStorage.getItem('uid')});
+            this.setState({token: sessionStorage.getItem('udata')});
+            PostData('myprofile', this.state).then((result) => {
+                let responseJson = result;
+                if (responseJson) {
+                    return (responseJson);
+                    // alert(JSON.stringify(responseJson));
+                    // sessionStorage.setItem('udata', JSON.stringify(responseJson));
+                    // this.setState({redirectToReferrer: true});                
+                }
+            });
+        }
     
     render () {
         if (this.state.edit) {
@@ -423,7 +439,7 @@ class Profile extends Main {
         } else {
             return (
                 <UserProfile
-                    user={this.state} /> 
+                    user={this.getInfo} /> 
         )}
     }
 }
@@ -476,6 +492,11 @@ class Settings extends Main {
         this.forceUpdate();
     }
 
+    logout() {
+        sessionStorage.removeItem('udata');
+        <Redirect to="/" />
+    }
+
     render () {
     var mailNotiBtnOn = (this.state.emailNoti ? 'btn half btn-success' : 'btn half btn-default');
     var mailNotiBtnOff = (this.state.emailNoti ? 'btn half btn-default' : 'btn half btn-danger');
@@ -495,6 +516,7 @@ class Settings extends Main {
                         <button className={mailNotiBtnOn} onClick={() => this.MailNotiPref(1)}>ON</button>
                         <button className={mailNotiBtnOff} onClick={() => this.MailNotiPref(0)}>OFF</button>
                     </div>
+                    <a href="/" className="logout-btn" onClick={ this.logout }>Log out</a>
                 </div>
             </div>
         );

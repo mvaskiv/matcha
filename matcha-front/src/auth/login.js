@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { PostData } from '../service/post.js';
-import { Redirect } from 'react-router';
+import { browserHistory, Router, Route, Redirect } from 'react-router';
+import Main from '../view/main';
+import App from '../App';
 
 class LoginForm extends Component {
     constructor() {
@@ -17,8 +19,10 @@ class LoginForm extends Component {
         if(this.state.login && this.state.password) {
             PostData('login', this.state).then((result) => {
                 let responseJson = result;
-                if (responseJson.name) {
-                    sessionStorage.setItem('udata', JSON.stringify(responseJson));
+                // alert(JSON.stringify(responseJson));
+                if (responseJson.status === "ok" && responseJson.token) {
+                    sessionStorage.setItem('udata', responseJson.token);
+                    sessionStorage.setItem('uid', responseJson.id);
                     this.setState({redirectToReferrer: true});
                 }
             });
@@ -31,7 +35,7 @@ class LoginForm extends Component {
 
     render() {
         if (this.state.redirectToReferrer || sessionStorage.getItem('udata')) {
-            // return (<Redirect to={'/Home'} />)
+            // return (<Router history={browserHistory}><Route path="/" Component={ Main } /><Redirect from='/login' to='/' /></Router>)
         }
         return (
             <div className="Intro">

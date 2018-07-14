@@ -8,6 +8,7 @@ import LoginForm from './auth/login.js';
 // import RegisterForm from './auth/register';
 import Welcome from './view/welcome';
 import Main from './view/main';
+import { Redirect } from 'react-router';
 
 const LoginHeader = ({ title }) => (
   <div className="welcome-signin posa full" id='header'>
@@ -80,18 +81,29 @@ class App extends Component {
   }
 
   render() {
-    return (
-      <Router history={browserHistory}>
-        <Route path="/" component={Home} history={browserHistory}/>
-        <Route path="/welcome" component={Home}/>
-        <Route path="/about" component={About}/>
-        <Route path="/login" component={Login}/>
-        {/* <Route path="/register" component={Register}/> */}
-        <Route path="/users" component={allUsers}/>
-        <Route path="/user" component={allUsers}/>
-        <Route path="/:username" component={User}/>
-      </Router>
-    );
+    if (!this.state.loggedin) {
+      return (
+        <Router history={browserHistory}>
+          <Route exact path="/" component={Home} />
+          <Route exact path="/welcome" component={Home}/>
+          <Route exact path="/login" component={Login}/>
+          <Route component={Home} />
+        </Router>
+      );
+    } else {
+      return (
+        <Router history={browserHistory}>
+          <Route exact path="/" component={Main} />
+          {/* <Route path="/about" component={About}/> */}
+          {/* <Route path="/login" component={Login}/> */}
+          {/* <Route path="/register" component={Register}/> */}
+          <Route path="/users" component={allUsers}/>
+          <Route path="/user" component={allUsers}/>
+          <Route path="/:username" component={User}/>
+          <Route component={Main} />
+        </Router>
+      );
+    }
 }
 }
 
