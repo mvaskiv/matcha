@@ -17,14 +17,18 @@ class BasicToken{
   }
 
   function check($token, $id){
-    $decoded = JWT::decode($jwt, $key, array('HS256'));
-    if ($decode['id'] == $id)
+    if (!$token)
+      return false;
+    $decoded = JWT::decode($token, $this->_key, array('HS256'));
+    if (!isset($decode['id']) || !isset($decode['time']))
+      return false;
+    if ($decode['id'] == $id && $decode['time'] > time())
       return ture;
     return false;
   }
 
   function update($token){
-    $decoded = JWT::decode($jwt, $key, array('HS256'));
+    $decoded = JWT::decode($token, $this->_key, array('HS256'));
     $decode['time'] = time() + 2 * 60 * 60;
     $jwt = JWT::encode($token, $this->_key);
     return ($jwt);

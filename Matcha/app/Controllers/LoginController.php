@@ -46,7 +46,8 @@ class LoginController extends BasicToken {
     }
   }
   $this->rt['status'] = 'ok';
-  $this->rt['token'] = $this->generate($login);
+  $this->rt['id'] = $row['id'];
+  $this->rt['token'] = $this->generate($row['id']);
   return true;
 }
 

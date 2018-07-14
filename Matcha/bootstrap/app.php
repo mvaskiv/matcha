@@ -36,4 +36,8 @@ $container['LoginController'] = function($container){
   return new \App\Controllers\LoginController;
 };
 
+$container['MyprofileController'] = function($container){
+  return new \App\Controllers\MyprofileController;
+};
+
 require_once __DIR__.'/../app/routes.php';
