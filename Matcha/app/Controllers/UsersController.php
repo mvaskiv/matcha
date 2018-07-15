@@ -17,28 +17,29 @@ class UsersController extends BasicToken {
   }
 
   public function insert($request, $response){
+    $this->parsedBody = $request->getParsedBody();
     $this->init();
-    foreach ($conn->query($sql) as $row) {
-
+    if (!isset($this->parsedBody['sort']) || !isset($this->parsedBody['start']) || !isset($this->parsedBody['number'])){
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no sort or start or number';
+      return json_encode($this->rt);
     }
-    $this->rt['status'] = 'ko';
+    $this->exec();
     return json_encode($this->rt);
   }
 
   private function exec(){
-    $stmt = $this->conn->prepare("SELECT * FROM user");
-    $login = $this->parsedBody['login'];
-    if ($stmt->execute([$login, $login])){
-      $row = $stmt->fetch();
-      if (!isset($row['email'])){
-        $this->rt['status'] = 'ko';
-        $this->rt['error'] = 'no user';
-        return false;
+    $usr = array();
+    $start = intval($this->parsedBody['start']);
+    $number = intval($this->parsedBody['number']);
+    $stmt = $this->conn->prepare("SELECT `f_name`, `l_name`, `u_name` FROM user LIMIT $start, $number");
+    if ($stmt->execute()){
+      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+        array_push($usr, $row);
       }
     }
-  }
-  unset($row['password']);
-  array_push($this->rt, $row);
+  $this->rt['data'] = $usr;
   $this->rt['status'] = 'ok';
   return true;
+}
 }
