@@ -18,22 +18,30 @@ class MyprofileController extends BasicToken {
 
   public function insert($request, $response){
     $this->parsedBody = $request->getParsedBody();
-    if  (!$this->check($this->parsedBody['token'], $this->parsedBody['id'])){
-      $this->rt['status'] = 'ko';
-      $this->rt['error'] = 'wrong token';
-      return json_encode($this->rt);
-    }
     if (!isset($this->parsedBody['id']) || !isset($this->parsedBody['token'])){
       $this->rt['status'] = 'ko';
-      $this->rt['error'] = 'no is or token';
+      $this->rt['error'] = 'no id or token';
       return json_encode($this->rt);
     }
+    try{
+        if  (!$this->check($this->parsedBody['token'], $this->parsedBody['id'])){
+          $this->rt['status'] = 'ko';
+          $this->rt['error'] = 'wrong token';
+          return json_encode($this->rt);
+        }
     if ($this->exec())
       $this->rt['status'] = 'ok';
+    $this->rt['token'] = $this->update($this->parsedBody['token']);
+  } catch (\Exception $e){
+      $this->rt['status'] = 'ok';
+      $this->rt['error'] = 'token is broken';
+      return json_encode($this->rt);
+  }
     return json_encode($this->rt);
   }
 
   private function exec(){
+    $this->init();
     $stmt = $this->conn->prepare("SELECT * FROM user WHERE `id` = ?");
     $id = $this->parsedBody['id'];
     if ($stmt->execute([$id])){

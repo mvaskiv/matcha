@@ -5,14 +5,18 @@ namespace App\Controllers;
 use \Firebase\JWT\JWT;
 
 class BasicToken{
-  protected $_key = "Xd234mOp*)fd";
+  protected $_key = "example_key";
 
   function generate($id_user){
     $token = array(
-      $id => $id_user,
-      $time => time() + 2 * 60 * 60
+      "id" => $id_user,
+      "time" => (time() + 2 * 60 * 60)
     );
     $jwt = JWT::encode($token, $this->_key);
+    $decoded = JWT::decode($jwt, $this->_key, array('HS256'));
+
+    print_r($decoded);
+
     return ($jwt);
   }
 
@@ -20,17 +24,20 @@ class BasicToken{
     if (!$token)
       return false;
     $decoded = JWT::decode($token, $this->_key, array('HS256'));
-    if (!isset($decode['id']) || !isset($decode['time']))
-      return false;
-    if ($decode['id'] == $id && $decode['time'] > time())
-      return ture;
+    $decoded_array = (array) $decoded;
+    if (!isset($decoded_array['id']) || !isset($decoded_array['time']))
+       return false;
+    if ($decoded_array['id'] == $id && $decoded_array['time'] > time()){
+       return true;
+     }
     return false;
   }
 
   function update($token){
     $decoded = JWT::decode($token, $this->_key, array('HS256'));
-    $decode['time'] = time() + 2 * 60 * 60;
-    $jwt = JWT::encode($token, $this->_key);
+    $decoded_array = (array) $decoded;
+    $decoded_array['time'] = time() + 2 * 60 * 60;
+    $jwt = JWT::encode($decoded_array, $this->_key);
     return ($jwt);
   }
 }
