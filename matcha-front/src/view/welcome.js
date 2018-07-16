@@ -13,7 +13,7 @@ class Welcome extends Component {
             l_name: '',
             email: '',
             gender: '1',
-            sex_preference: '0',
+            sex_preference: '2',
             location: '',
             tags: '',
             biography: '',
@@ -24,6 +24,7 @@ class Welcome extends Component {
             password: '',
             passwordConfirmation: '',
             required: false,
+            pasNoMatch: false,
             redirectToReferrer: false
         };
         this.baseState = this.state;
@@ -61,12 +62,14 @@ class Welcome extends Component {
         }
     }
 
-    validityCheck(e) {
-       
+    validityCheck() {
+       if (this.state.password && this.state.passwordConfirmation &&
+        this.state.password !== this.state.passwordConfirmation) {
+            this.setState({pasNoMatch: true});
+        }
     }
 
     findLocation() {
-
         var l = "zhopa";
         this.setState({location: l});
     }
@@ -106,13 +109,13 @@ class Welcome extends Component {
                     <label>Gender and preference:</label>
                     <div className="form-element-group full">
                         <select className='form-element has-primary half' name="gender" onChange={this.onChange} value={this.state.gender}>
-                        <option value="M">Man seeking</option>
-                        <option value="W">Woman seeking</option>
+                        <option value="1">Man seeking</option>
+                        <option value="2">Woman seeking</option>
                         </select>
                         <select className='form-element has-danger half' name="sex_preference" onChange={this.onChange} value={this.state.sex_preference}>
-                        <option value="W">Women</option>
-                        <option value="M">Men</option>
-                        <option value="B">Both</option>
+                        <option value="2">Women</option>
+                        <option value="1">Men</option>
+                        <option value="3">Both</option>
                         </select>
                     </div>
                     <label>Tell us where you are:</label>
@@ -154,13 +157,13 @@ class Welcome extends Component {
                 </div>
                 <div style={{marginTop:85 + 'px'}}>
                   <div className="form-element-group full">
-                    <select className='form-element has-primary half' name="gender" onChange={this.onChange}>
-                      <option value="M">Man</option>
-                      <option value="W">Woman</option>
+                    <select className='form-element has-primary half' name="gender" onChange={this.onChange} value={this.state.gender}>
+                      <option value="1">Man</option>
+                      <option value="2">Woman</option>
                     </select>
-                    <select className='form-element has-danger half' name="sex_preference" onChange={this.onChange}>
-                      <option value="W">Women</option>
-                      <option value="M">Men</option>
+                    <select className='form-element has-danger half' name="sex_preference" onChange={this.onChange} value={this.state.sex_preference}>
+                      <option value="2">Women</option>
+                      <option value="1">Men</option>
                     </select>
                   </div>
                   <label>&nbsp;And I was born on</label>

@@ -19,25 +19,52 @@ const TopBar = (props) => (
 
 const UserThumb = (props) => {
     var username = props.data[0];
-    var userid = props.data[1];
+    var userid = props.data['id'];
     return (
         <img onClick={() => Main.showProfile( userid )} className='user-avatar' key={this} alt={ username } src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' />
     );
 }
 
-const BrowseUsers = (props) => {
-    var users = [['Kate', '1'], ['John', '2'], ['Vasya', '3'], ['Alice', '4']];
-    var UserMap = users.map((user, i) => {
-        return (
-            <UserThumb key={i} data={ user } />
-        );
-    });
-    
-    return (
-        <div className='showAllUsers'>
-           { UserMap }
-        </div>
-    );
+class BrowseUsers extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            uid: '',
+            users: '',
+            sort: '0',
+            start: '0',
+            number: '21'
+        }
+    }
+
+    componentDidMount() {
+        PostData('users', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson.data;
+                this.setState({users: a});
+            }
+        });
+    }
+
+    render() {
+        if (!this.state.users) {
+            return null;
+        } else {
+            // var users = [['Kate', '1'], ['John', '2'], ['Vasya', '3'], ['Alice', '4']];
+            var UserMap = this.state.users.map((user, i) => {
+                return (
+                    <UserThumb key={i} data={ user } />
+                );
+            });
+            
+            return (
+                <div className='showAllUsers'>
+                { UserMap }
+                </div>
+            );
+        }
+    }
 }
 
 const MainView = (props) => (
@@ -122,6 +149,7 @@ class Main extends Component {
         if (a === 'settings') {
             this.setState({showMenu: true});    
         } else {
+            Messages.resetChat();
             this.setState({viewProfile: ''});
             this.setState({display: a});
             this.setState({showMessages: false});
@@ -247,6 +275,7 @@ class Messages extends Main {
         this.setState({chatid: ''});
         this.setState({new: false});
     }
+
     static setChatid(a) {
         this.setState({chatid: a});
     }
@@ -298,11 +327,11 @@ class Chat extends Messages {
     }
 
     componentDidMount() {
-        this.msglst.lastChild.scrollIntoView(!0, {behavior: 'smooth'});
+        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
     }
 
     componentDidUpdate() {
-        this.msglst.lastChild.scrollIntoView(!0, {behavior: 'smooth'});
+        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
     }
 
     onChange(e) {
@@ -362,48 +391,83 @@ class Chat extends Messages {
     }
 }
 
-const UserProfile = (props) => {
-    if (props.user) {
-        var username = props.user.name;
-        var userage = props.user.age;
-    } else if (props.id) {
-        var username = props.id;
-    } else {
-        var none = true;
+class UserProfile extends Main {
+    constructor(props) {
+        super(props);
+        this.state = {
+            token: sessionStorage.getItem('udata'),
+            id: sessionStorage.getItem('uid'),
+            viewId: '',
+            data: ''
+        }
     }
-    
-    if (none) { return null }
-    else {
-        return (
-        <div className='inner-cnt'>
-            <div className='profile-img'>
-                <img className='profile-img' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' alt=''/>
-            </div>
-            <div className='basic-u-info'>
-                <h3>{ username }, { userage }</h3>
-                <button className='btn btn-default'>Edit Your Profile</button>
-            </div>
-            <div className='ext-u-info'>
-                <div className='fll half'>
-                    <label>Gender</label>
-                    <span>Female</span>
-                    <label>Born on</label>
-                    <span>17.02.1995</span>
+
+    componentDidUpdate() {
+        if (this.props.id && (this.props.id !== this.state.viewId)) {
+            this._getInfo();
+        }
+    }
+
+    changeView() {
+        this.setState({viewId: this.props.id});
+    }
+
+    async _getInfo() {
+        await this.changeView();
+        PostData('myprofile', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson[0];
+                this.setState({data: a});
+            }
+        });
+    }
+
+    render() {
+        if (this.state.data) {
+            // this._getInfo();
+            var userid = this.state.data['id'];
+            var username = this.state.data['f_name'];
+            var userage = this.state.data[0];
+            var usergender = this.state.data['gender'] === 'M' ? 'Male' : 'Female';
+            var userpref = this.state.data['sex_preference'] === 'M' ? 'Men' : 'Women';
+            var userdob = this.state.data['date'];
+            var usertag = this.state.data['tags'];
+            var userbio = this.state.data['biography'];
+
+            return (
+            <div className='inner-cnt'>
+                <div className='profile-img'>
+                    <img onClick={() => Profile.getInfo()} className='profile-img' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' alt=''/>
                 </div>
-                <div className='fll half'>
-                    <label>Seeking</label>
-                    <span>Men</span>
-                    <label>Interested in</label>
-                    <span>Rock, Heavy Metal, Doobious Affairs</span>
-                </div> 
-                <label>Bio</label>
-                <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</span>
-                <div className='ext-u-photos'>
-                    <label>My Photos</label>
+                <div className='basic-u-info'>
+                    <h3> { username } , { userage } </h3>
+                    <button className='btn btn-default'>Message</button>
+                </div>
+                <div className='ext-u-info'>
+                    <div className='fll half'>
+                        <label>Gender</label>
+                        <span> { usergender } </span>
+                        <label>Born on</label>
+                        <span> { userdob } </span>
+                    </div>
+                    <div className='fll half'>
+                        <label>Seeking</label>
+                        <span> { userpref } </span>
+                        <label>Interested in</label>
+                        <span> { usertag } </span>
+                    </div> 
+                    <label>Bio</label>
+                    <span> { userbio } </span>
+                    <div className='ext-u-photos'>
+                        <label>My Photos</label>
+                    </div>
                 </div>
             </div>
-        </div>
-        )
+            )
+        } else {
+            return null;
+        }
     }
 }
 
@@ -412,34 +476,63 @@ class Profile extends Main {
         super();
         this.state = {
             edit: false,
-            id: '',
-            token: ''
+            me: '',
+            id: sessionStorage.getItem('uid'),
+            token: sessionStorage.getItem('udata')
         }
     }
-
-    getInfo() {
-        // if (this.state.f_name && this.state.password) {
-        //     this.state.date = this.state.year + '-' + this.state.month + '-' + this.state.day;
-            this.setState({id: sessionStorage.getItem('uid')});
-            this.setState({token: sessionStorage.getItem('udata')});
-            PostData('myprofile', this.state).then((result) => {
-                let responseJson = result;
-                if (responseJson) {
-                    return (responseJson);
-                    // alert(JSON.stringify(responseJson));
-                    // sessionStorage.setItem('udata', JSON.stringify(responseJson));
-                    // this.setState({redirectToReferrer: true});                
-                }
-            });
-        }
     
+    componentDidMount() {
+        PostData('myprofile', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson[0];
+                this.setState({me: a});
+            }
+        });
+    }
+
     render () {
+        var userid = this.state.me['id'];
+        var username = this.state.me['f_name'];
+        var userage = this.state.me[0];
+        var usergender = this.state.me['gender'] === 'M' ? 'Male' : 'Female';
+        var userpref = this.state.me['sex_preference'] === 'M' ? 'Men' : 'Women';
+        var userdob = this.state.me['date'];
+        var usertag = this.state.me['tags'];
+        var userbio = this.state.me['biography'];
         if (this.state.edit) {
             return null
         } else {
             return (
-                <UserProfile
-                    user={this.getInfo} /> 
+            <div className='inner-cnt'>
+                <div className='profile-img'>
+                    <img onClick={() => Profile.getInfo()} className='profile-img' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' alt=''/>
+                </div>
+                <div className='basic-u-info'>
+                    <h3> { username } , { userage } </h3>
+                    <button className='btn btn-default'>Edit Your Profile</button>
+                </div>
+                <div className='ext-u-info'>
+                    <div className='fll half'>
+                        <label>Gender</label>
+                        <span> { usergender } </span>
+                        <label>Born on</label>
+                        <span> { userdob } </span>
+                    </div>
+                    <div className='fll half'>
+                        <label>Seeking</label>
+                        <span> { userpref } </span>
+                        <label>Interested in</label>
+                        <span> { usertag } </span>
+                    </div> 
+                    <label>Bio</label>
+                    <span> { userbio } </span>
+                    <div className='ext-u-photos'>
+                        <label>My Photos</label>
+                    </div>
+                </div>
+            </div>
         )}
     }
 }
@@ -493,8 +586,10 @@ class Settings extends Main {
     }
 
     logout() {
-        sessionStorage.removeItem('udata');
-        <Redirect to="/" />
+        if (window.confirm('Do you really wanna log out?')) {
+            sessionStorage.removeItem('udata');
+            browserHistory.push('/');
+        }
     }
 
     render () {
@@ -516,7 +611,7 @@ class Settings extends Main {
                         <button className={mailNotiBtnOn} onClick={() => this.MailNotiPref(1)}>ON</button>
                         <button className={mailNotiBtnOff} onClick={() => this.MailNotiPref(0)}>OFF</button>
                     </div>
-                    <a href="/" className="logout-btn" onClick={ this.logout }>Log out</a>
+                    <a className="logout-btn" onClick={ this.logout }>Log out</a>
                 </div>
             </div>
         );

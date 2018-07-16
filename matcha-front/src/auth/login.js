@@ -10,6 +10,7 @@ class LoginForm extends Component {
         this.state = {
             login: '',
             password: '',
+            wrongCred: false,
             redirectToReferrer: false
         };
         this.login = this.login.bind(this);
@@ -24,6 +25,9 @@ class LoginForm extends Component {
                     sessionStorage.setItem('udata', responseJson.token);
                     sessionStorage.setItem('uid', responseJson.id);
                     this.setState({redirectToReferrer: true});
+                    browserHistory.push('/');
+                } else if (responseJson.status === "ko" && responseJson.error === "no user") {
+                    this.setState({wrongCred: true});
                 }
             });
         }
@@ -44,6 +48,9 @@ class LoginForm extends Component {
                     <input type="text" className='form-element full input-ln' placeholder="Your email or login" name='login' onChange={this.onChange}/>
                     <input type="password" className='form-element full input-ln' placeholder="Your password" name='password' onChange={this.onChange}/>
                 <button className="btn btn-primary full" onClick={this.login}>Enter</button>
+                <div className="alert a-is-danger login-alert" style={{display: this.state.wrongCred ? 'block' : 'none'}}>
+                    <p>Please, check your credentials and try again.</p>
+                </div>
             </div>
         );
     }
