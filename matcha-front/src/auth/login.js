@@ -22,8 +22,8 @@ class LoginForm extends Component {
                 let responseJson = result;
                 // alert(JSON.stringify(responseJson));
                 if (responseJson.status === "ok" && responseJson.token) {
-                    sessionStorage.setItem('udata', responseJson.token);
-                    sessionStorage.setItem('uid', responseJson.id);
+                    localStorage.setItem('udata', responseJson.token);
+                    localStorage.setItem('uid', responseJson.id);
                     this.setState({redirectToReferrer: true});
                     browserHistory.push('/');
                 } else if (responseJson.status === "ko" && responseJson.error === "no user") {
@@ -43,7 +43,7 @@ class LoginForm extends Component {
         }
         return (
             <div className="Intro">
-                <a href="/"><i className="far fa-times-circle flr mar5 close"></i></a>
+                <a onClick={() => App._loginCall(0)}><i className="far fa-times-circle flr mar5 close"></i></a>
                 <h3>&nbsp;Welcome back</h3><br />
                     <input type="text" className='form-element full input-ln' placeholder="Your email or login" name='login' onChange={this.onChange}/>
                     <input type="password" className='form-element full input-ln' placeholder="Your password" name='password' onChange={this.onChange}/>

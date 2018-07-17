@@ -45,7 +45,7 @@ class Welcome extends Component {
             PostData('registration', this.state).then((result) => {
                 let responseJson = result;
                 if (responseJson.name) {
-                    sessionStorage.setItem('udata', JSON.stringify(responseJson));
+                    localStorage.setItem('udata', JSON.stringify(responseJson));
                     this.setState({redirectToReferrer: true});                
                 }
             });

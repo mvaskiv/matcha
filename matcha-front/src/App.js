@@ -12,7 +12,7 @@ import { Redirect } from 'react-router';
 
 const LoginHeader = ({ title }) => (
   <div className="welcome-signin posa full" id='header'>
-    <a href="/login"><p className='login-btn flr mar5'>Log in</p></a>
+    <a onClick={() => App._loginCall(1)}><p className='login-btn flr mar5'>Log in</p></a>
     <a href="/"><p className='logo fll mar5'>matcha</p></a>
   </div>
 );
@@ -22,7 +22,7 @@ const Home = (props) => (
   <div className="welcome-bg"></div>
   <div>
     <LoginHeader />
-    <Welcome />
+    {props.login ? <LoginForm /> : <Welcome />}
   </div>
   </div>
 );
@@ -84,15 +84,15 @@ const PrivateRoute = ({ component: Component, ...rest }) => (
 )
 
 const SetRoute = (props) => {
-  if (sessionStorage.getItem('udata')) {
+  if (localStorage.getItem('udata')) {
     return <Main />
   } else {
-    return <Home />
+    return <Home login={props.login} />
   }
 }
 
 const LoginRoute = (props) => {
-  if (sessionStorage.getItem('udata')) {
+  if (localStorage.getItem('udata')) {
     browserHistory.push('/');    
     return <Main />
   } else {
@@ -104,12 +104,23 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      loggedin: false
+      login: false,
     };
+    App._loginCall = App._loginCall.bind(this);
+  }
+
+  static _loginCall(a) {
+    if (a === 1) {
+      this.setState({login: true});
+      browserHistory.push('login');
+    } else {
+      this.setState({login: false});
+      browserHistory.push('/');
+    }
   }
 
   loggedIn() {
-    if (sessionStorage.getItem('udata')) {return true;}
+    if (localStorage.getItem('udata')) {return true;}
     else {return false;}
   }
 
@@ -126,8 +137,8 @@ class App extends Component {
     // } else {
       return (
         <Router history={browserHistory}>
-          <Route exact path="/" component={SetRoute} />
-          <Route exact path="/login" component={LoginRoute}/>
+          <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
+          {/* <Route exact path="/login" component={LoginRoute}/> */}
 
           {/* <Route path="/login" component={Login}/> */}
           {/* <Route path="/register" component={Register}/> */}

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Router, browserHistory, Route, Link } from 'react-router';
+import FileBase64 from 'react-file-base64';
 import { PostData } from '../service/post.js';
 import { Redirect } from 'react-router-dom';
 // import UserThumb from '../parts/userThumb';
@@ -11,6 +12,7 @@ const TopBar = (props) => (
     <div className='topbar'>
     <nav className='full tac'>
         <p className='logo-sm'>matcha</p>
+        {/* <a style={{display: !props.return ? 'block' : 'none'}} className='fll'><i onClick={() => Main.showProfile(-42)} className="far fa-star"></i></a> */}
         <a style={{display: props.return ? 'block' : 'none'}} className='fll'><i onClick={() => Main.showProfile(-42)} className="fas fa-arrow-left"></i></a>
         <a href="#messages" className='flr' onClick={() => Main.callMessages(1)}><i className="far fa-envelope"></i></a>
     </nav>
@@ -18,10 +20,16 @@ const TopBar = (props) => (
 )
 
 const UserThumb = (props) => {
-    var username = props.data[0];
+    var username = props.data['f_name'];
     var userid = props.data['id'];
+    var usergen = props.data['gender'];
+    var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";
+
     return (
-        <img onClick={() => Main.showProfile( userid )} className='user-avatar' key={this} alt={ username } src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' />
+        <div className='u-thumb-wrapper'>
+            <img onClick={() => Main.showProfile( userid )} className='user-avatar' key={this} alt={ username } src={ src } />
+            <p className='u-thumb-name'> { username } </p>
+        </div>
     );
 }
 
@@ -29,18 +37,52 @@ class BrowseUsers extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            dbEnd: false,
             uid: '',
             users: '',
             sort: '0',
             start: '0',
-            number: '21'
+            number: 21
         }
+        this._onScroll = this._onScroll.bind(this);
+        this._scrollListener = this._scrollListener.bind(this);
     }
 
     componentDidMount() {
         PostData('users', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
+                var a = responseJson.data;
+                this.setState({users: a});
+            }
+        });
+    }
+
+    componentDidUpdate() {
+        this.ulist.addEventListener('scroll', this._scrollListener);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.onScroll, false);
+    }
+
+    _scrollListener() {
+        if (this.ulist.scrollTop + this.ulist.clientHeight >= this.ulist.scrollHeight) {
+            this._onScroll();
+        }
+    }
+
+    async _onScroll() {
+        var n = this.state.number + 21;
+        await this.setState({number: n});
+        PostData('users', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                if (responseJson.status === 'dbEnd') {
+                    this.setState({dbEnd: true});
+                    this.ulist.removeEventListener('scroll', this._scrollListener);
+                    return ;
+                }
                 var a = responseJson.data;
                 this.setState({users: a});
             }
@@ -59,8 +101,10 @@ class BrowseUsers extends Component {
             });
             
             return (
-                <div className='showAllUsers'>
-                { UserMap }
+                <div className='showAllUsers' ref={ulist => {this.ulist = ulist;}}>
+                    { UserMap }
+                    <img className='preloader' src="http://www.wellnessexpome.com/wp-content/uploads/2018/06/pre-loader.gif"
+                    style={{display: this.state.dbEnd ? 'none' : 'block'}}/>
                 </div>
             );
         }
@@ -172,18 +216,19 @@ class Main extends Component {
     render () {
         return (
             <div className='container'>
-                <div className='content' style={{top: this.state.showMenu ? -15 + 'em' : 0 + 'em'}}>
-                    <div className='main-center' style={{transform: this.state.showMessages ? 'translateX(-100%)' : 'translateX(0%)'}}>
+                <div className='content' style={{transform: this.state.showMessages ? 'translateX(-33%)' : 'translateX(0%)'}}>
+                    <div className='main-center' style={{top: this.state.showMenu ? -15 + 'em' : 0 + 'em'}}>
                         <TopBar return={ this.state.viewProfile } />
                         <MainView item={ this.state.display } profile={ this.state.viewProfile } />
+                    </div>
+                    <div className='menus-panel' style={{bottom: this.state.showMenu ? 100 + '%' : 0 + 'px'}}>
+                        <MenuBar display={this.state.display} />
                     </div>
                 </div>
                 <div className='noti-panel-cnt' style={{transform: this.state.showMessages ? 'translateX(-100%)' : 'translateX(0%)'}}>
                     <Messages />
                 </div>
-                <div className='menus-panel' style={{bottom: this.state.showMenu ? 100 + '%' : 0 + 'px'}}>
-                    <MenuBar display={this.state.display} hide={ this.state.hideMenuBar } />
-                </div>
+                
             </div>
         );
     }
@@ -327,7 +372,7 @@ class Chat extends Messages {
     }
 
     componentDidMount() {
-        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        this.msglst.lastChild.scrollIntoView(!0);
     }
 
     componentDidUpdate() {
@@ -346,7 +391,7 @@ class Chat extends Messages {
     }
 
     InputOnFocus(a) {
-        Main.hideMenuBar(a);
+        // // Main.hideMenuBar(a);
         if (a === 1) {this.setState({focus: true});}
         else {this.setState({focus: false});}
         this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
@@ -355,7 +400,11 @@ class Chat extends Messages {
     render () {
         if (this.props.id == 1) {
             var display = this.state.messages.map((message) => {
-                return <li><p className={(message[1] == '0' ? 'sent-message btn' : 'received-message btn')}>{message[0]}</p></li>
+                return (
+                    <li className='msg-cps'>
+                        <p className={(message[1] == '0' ? 'sent-message btn' : 'received-message btn')}>{message[0]}<span className={(message[1] == '0' ? 'msg-time-r' : 'msg-time-l')}>22:00</span></p>
+                    </li>
+                );
             })
         } else {
             var display = null;
@@ -367,24 +416,22 @@ class Chat extends Messages {
                     <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
                     <h4 className='menu-head'>Messages</h4>
                 </div>
-                <div className='chat-self' style={{paddingBottom: this.state.focus ? 4.5 + 'em' : 7.7 + 'em'}}>
+                <div className='chat-self'>
                     <ul ref={msglst => {this.msglst = msglst;}}>
                         { display }
                     </ul>
                 </div >
-                <div className='message-input' style={{bottom: this.state.focus ? 0.5 + 'em' : 3.5 + 'em'}}>
-                    <div className='form-element-group msg-input'>
-                        <input
-                            type='text'
-                            className='form-element msg-in'
-                            placeholder='Your message here'
-                            name='newMessage'
-                            value={ this.state.newMessage }
-                            onChange={this.onChange}
-                            onFocus={() => this.InputOnFocus(1)}
-                            onBlur={() => this.InputOnFocus(0)} />
-                        <span onClick={() => this.testMessage()} className='form-element-extra msg-snd-btn'><i class="fab fa-telegram-plane"></i></span>
-                    </div>
+                <div className='form-element-group msg-input'>
+                    <input
+                        type='text'
+                        className='form-element msg-in'
+                        placeholder='Your message here'
+                        name='newMessage'
+                        value={ this.state.newMessage }
+                        onChange={this.onChange}
+                        onFocus={() => this.InputOnFocus(1)}
+                        onBlur={() => this.InputOnFocus(0)} />
+                    <span onClick={() => this.testMessage()} className='form-element-extra msg-snd-btn'><i className="fab fa-telegram-plane"></i></span>
                 </div>
             </div>
         );
@@ -395,8 +442,8 @@ class UserProfile extends Main {
     constructor(props) {
         super(props);
         this.state = {
-            token: sessionStorage.getItem('udata'),
-            id: sessionStorage.getItem('uid'),
+            token: localStorage.getItem('udata'),
+            id: localStorage.getItem('uid'),
             viewId: '',
             data: ''
         }
@@ -423,26 +470,37 @@ class UserProfile extends Main {
         });
     }
 
+    _userAge(d) {
+        var dD = new Date(d);
+        var aD = Date.now() - dD.getTime();
+        var aT = new Date(aD);
+        return Math.abs(aT.getUTCFullYear() - 1970);
+    }
+
     render() {
         if (this.state.data) {
             // this._getInfo();
             var userid = this.state.data['id'];
+            var userdob = this.state.data['date'];
             var username = this.state.data['f_name'];
-            var userage = this.state.data[0];
+            var userage = this._userAge(userdob);
             var usergender = this.state.data['gender'] === 'M' ? 'Male' : 'Female';
             var userpref = this.state.data['sex_preference'] === 'M' ? 'Men' : 'Women';
-            var userdob = this.state.data['date'];
             var usertag = this.state.data['tags'];
             var userbio = this.state.data['biography'];
-
+            var usergen = this.state.data['gender'];
+            var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";        
             return (
             <div className='inner-cnt'>
                 <div className='profile-img'>
-                    <img onClick={() => Profile.getInfo()} className='profile-img' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' alt=''/>
+                    <img className='profile-img' src={ src } alt=''/>
                 </div>
                 <div className='basic-u-info'>
-                    <h3> { username } , { userage } </h3>
-                    <button className='btn btn-default'>Message</button>
+                    <h3> { username }, { userage } </h3>
+                    <div className='btn-group'>
+                        <button className='btn btn-default'>Message</button>
+                        <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                    </div>
                 </div>
                 <div className='ext-u-info'>
                     <div className='fll half'>
@@ -476,10 +534,12 @@ class Profile extends Main {
         super();
         this.state = {
             edit: false,
+            imgUpload: false,
             me: '',
-            id: sessionStorage.getItem('uid'),
-            token: sessionStorage.getItem('udata')
+            id: localStorage.getItem('uid'),
+            token: localStorage.getItem('udata')
         }
+        this._onFileChange = this._onFileChange.bind(this);
     }
     
     componentDidMount() {
@@ -492,25 +552,50 @@ class Profile extends Main {
         });
     }
 
+    _onFileChange(f) {
+        var imgState = {img: f['base64'], id: this.state.id, token: this.state.token};
+        this.setState({imgUpload: imgState});
+    }
+
+    _onFileUpload() {
+        PostData('uploadphoto', this.state.imgUpload).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                if (responseJson.status === 'ok') {
+                    alert("Your image has been successfully uploaded!");
+                } else {
+                    alert("Ooops... Something's gone wrong. Please try again.");
+                }
+            }
+        });
+    }
+
+    _userAge(d) {
+        var dD = new Date(d);
+        var aD = Date.now() - dD.getTime();
+        var aT = new Date(aD);
+        return Math.abs(aT.getUTCFullYear() - 1970);
+    }
+
     render () {
-        var userid = this.state.me['id'];
-        var username = this.state.me['f_name'];
-        var userage = this.state.me[0];
-        var usergender = this.state.me['gender'] === 'M' ? 'Male' : 'Female';
-        var userpref = this.state.me['sex_preference'] === 'M' ? 'Men' : 'Women';
-        var userdob = this.state.me['date'];
-        var usertag = this.state.me['tags'];
-        var userbio = this.state.me['biography'];
         if (this.state.edit) {
             return null
-        } else {
+        } else if (this.state.me) {
+            var userid = this.state.me['id'];
+            var userdob = this.state.me['date'];
+            var username = this.state.me['f_name'];
+            var userage = this._userAge(userdob);
+            var usergender = this.state.me['gender'] === 'M' ? 'Male' : 'Female';
+            var userpref = this.state.me['sex_preference'] === 'M' ? 'Men' : 'Women';
+            var usertag = this.state.me['tags'];
+            var userbio = this.state.me['biography'];
             return (
             <div className='inner-cnt'>
                 <div className='profile-img'>
-                    <img onClick={() => Profile.getInfo()} className='profile-img' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' alt=''/>
+                    <img onClick={() => Profile.getInfo()} className='profile-img' src='https://instagram.fiev11-1.fna.fbcdn.net/vp/476a9995baf0a2651b562d5f0d104e4e/5BEB5631/t51.2885-19/s320x320/12822425_1686185784962098_229413371_a.jpg' alt=''/>
                 </div>
                 <div className='basic-u-info'>
-                    <h3> { username } , { userage } </h3>
+                    <h3> { username }, { userage } </h3>
                     <button className='btn btn-default'>Edit Your Profile</button>
                 </div>
                 <div className='ext-u-info'>
@@ -528,12 +613,15 @@ class Profile extends Main {
                     </div> 
                     <label>Bio</label>
                     <span> { userbio } </span>
+                    <button className='btn btn-default'><FileBase64 onDone={ this._onFileChange } /></button>
                     <div className='ext-u-photos'>
                         <label>My Photos</label>
                     </div>
                 </div>
             </div>
-        )}
+        )} else {
+            return null
+        }
     }
 }
 
@@ -541,7 +629,7 @@ class EditInfo extends Profile {
     constructor() {
         super();
     }
-
+    
     render () {
         return (
             <div>
@@ -587,7 +675,7 @@ class Settings extends Main {
 
     logout() {
         if (window.confirm('Do you really wanna log out?')) {
-            sessionStorage.removeItem('udata');
+            localStorage.removeItem('udata');
             browserHistory.push('/');
         }
     }
