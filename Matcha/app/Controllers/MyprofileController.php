@@ -43,7 +43,11 @@ class MyprofileController extends BasicToken {
   private function exec(){
     $this->init();
     $stmt = $this->conn->prepare("SELECT * FROM user WHERE `id` = ?");
-    $id = $this->parsedBody['id'];
+    if (isset($this->parsedBody['viewId'])) {
+      $id = $this->parsedBody['viewId'];
+    } else {
+      $id = $this->parsedBody['id'];
+    }
     if ($stmt->execute([$id])){
       $row = $stmt->fetch();
       if (!isset($row['id'])){

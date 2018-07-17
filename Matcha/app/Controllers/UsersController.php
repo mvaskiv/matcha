@@ -19,9 +19,17 @@ class UsersController extends BasicToken {
   public function insert($request, $response){
     $this->parsedBody = $request->getParsedBody();
     $this->init();
+    $stmtq = $this->conn->prepare("SELECT * FROM user");
+    $stmtq->execute();
+    $row_q = $stmtq->rowCount();
     if (!isset($this->parsedBody['sort']) || !isset($this->parsedBody['start']) || !isset($this->parsedBody['number'])){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'no sort or start or number';
+      return json_encode($this->rt);
+    }
+    if ($this->parsedBody['number'] > $row_q) {
+      $this->rt['status'] = 'dbEnd';
+      $this->rt['error'] = 'database end reached';
       return json_encode($this->rt);
     }
     $this->exec();
@@ -32,7 +40,7 @@ class UsersController extends BasicToken {
     $usr = array();
     $start = intval($this->parsedBody['start']);
     $number = intval($this->parsedBody['number']);
-    $stmt = $this->conn->prepare("SELECT `f_name`, `l_name`, `u_name` FROM user LIMIT $start, $number");
+    $stmt = $this->conn->prepare("SELECT `f_name`, `l_name`, `u_name`, `id`, `gender` FROM user LIMIT $start, $number");
     if ($stmt->execute()){
       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
         array_push($usr, $row);
