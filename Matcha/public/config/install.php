@@ -11,6 +11,8 @@ $password = '459512144';
       `u_name` VARCHAR(15), `gender` ENUM('M', 'F'), `sex_preference` ENUM('M', 'F'),
        `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `biography` TEXT, `tags` TEXT,
        `email` VARCHAR(20), `password` VARCHAR(50), `date` DATE)");
+  $conn->exec("CREATE TABLE `fotos` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `id_user` INT,
+                `all_foto` TEXT, `avatar` TEXT)");
   echo "Connection sucssec\n";
 } catch (PDOException $e) {
   echo 'Conection is fail ' . $e->getMessage();

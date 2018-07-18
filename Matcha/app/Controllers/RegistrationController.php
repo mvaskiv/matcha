@@ -2,9 +2,11 @@
 
 namespace App\Controllers;
 
-use App\Controllers\BasicMysqlController;
+use PDO;
+use App\sqlconf;
 
-class RegistrationController extends BasicMysqlController {
+
+class RegistrationController{
     private $parsedBody;
     private $f_name;
     private $l_name;
@@ -17,8 +19,16 @@ class RegistrationController extends BasicMysqlController {
     private $psw;
     private $date;
     private $rt = array();
+    protected $conn;
+
+    protected function init(){
+      $var = require_once 'sqlconf.php';
+      $this->conn = new PDO($var['dsn'], $var['user'], $var['password']);
+      $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
 
     public function insert($request, $response){
+      $this->init();
       $this->parsedBody = $request->getParsedBody();
       if ($this->ifis()){
         $this->parse();
@@ -80,7 +90,7 @@ class RegistrationController extends BasicMysqlController {
 
     private function notexist(){
 
-      $stmt = $this->conn->prepare("SELECT * FROM User WHERE email = ?");
+      $stmt = $this->conn->prepare("SELECT * FROM user WHERE email = ?");
 
       $email = $this->parsedBody['email'];
       if ($stmt->execute([$email])){

@@ -5,13 +5,14 @@ import logo from './logo.svg';
 import './App.css';
 
 import LoginForm from './auth/login.js';
-import RegisterForm from './auth/register';
+// import RegisterForm from './auth/register';
 import Welcome from './view/welcome';
 import Main from './view/main';
+import { Redirect } from 'react-router';
 
 const LoginHeader = ({ title }) => (
   <div className="welcome-signin posa full" id='header'>
-    <a href="/login"><p className='login-btn flr mar5'>Log in</p></a>
+    <a onClick={() => App._loginCall(1)}><p className='login-btn flr mar5'>Log in</p></a>
     <a href="/"><p className='logo fll mar5'>matcha</p></a>
   </div>
 );
@@ -21,20 +22,20 @@ const Home = (props) => (
   <div className="welcome-bg"></div>
   <div>
     <LoginHeader />
-    <Welcome />
+    {props.login ? <LoginForm /> : <Welcome />}
   </div>
   </div>
 );
 
-const Register = (props) => (
-  <div>
-  <div className="welcome-bg"></div>
-  <div>
-    <LoginHeader />
-    <RegisterForm />
-  </div>
-  </div>
-);
+// const Register = (props) => (
+//   <div>
+//   <div className="welcome-bg"></div>
+//   <div>
+//     <LoginHeader />
+//     <RegisterForm />
+//   </div>
+//   </div>
+// );
 
 const Login = (props) => (
   <div>
@@ -71,28 +72,84 @@ const allUsers = createReactClass ({
   }
 });
 
+const PrivateRoute = ({ component: Component, ...rest }) => (
+  <Route {...rest} render={(props) => (
+      this.state.loggedin === true
+      ? <Component {...props} />
+      : <Redirect to={{
+          pathname: '/login',
+          state: { from: props.location }
+        }} />
+  )} />
+)
+
+const SetRoute = (props) => {
+  if (localStorage.getItem('udata')) {
+    return <Main />
+  } else {
+    return <Home login={props.login} />
+  }
+}
+
+const LoginRoute = (props) => {
+  if (localStorage.getItem('udata')) {
+    browserHistory.push('/');    
+    return <Main />
+  } else {
+    return <Login />
+  }
+}
+
 class App extends Component {
   constructor() {
     super();
     this.state = {
-      loggedin: false
+      login: false,
     };
+    App._loginCall = App._loginCall.bind(this);
+  }
+
+  static _loginCall(a) {
+    if (a === 1) {
+      this.setState({login: true});
+      browserHistory.push('login');
+    } else {
+      this.setState({login: false});
+      browserHistory.push('/');
+    }
+  }
+
+  loggedIn() {
+    if (localStorage.getItem('udata')) {return true;}
+    else {return false;}
   }
 
   render() {
-    return (
-      <Router history={browserHistory}>
-        <Route path="/" component={Main} history={browserHistory}/>
-        <Route path="/welcome" component={Home}/>
-        <Route path="/about" component={About}/>
-        <Route path="/login" component={Login}/>
-        <Route path="/register" component={Register}/>
-        <Route path="/users" component={allUsers}/>
-        <Route path="/user" component={allUsers}/>
-        <Route path="/:username" component={User}/>
-      </Router>
-    );
-}
+    // if (!sessionStorage.getItem('udata')) {
+    //   return (
+    //     <Router history={browserHistory}>
+    //       <Route exact path="/" component={Home} />
+    //       <Route exact path="/welcome" component={Home}/>
+    //       <Route exact path="/login" component={Login}/>
+    //       <Route component={Home} />
+    //     </Router>
+    //   );
+    // } else {
+      return (
+        <Router history={browserHistory}>
+          <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
+          {/* <Route exact path="/login" component={LoginRoute}/> */}
+
+          {/* <Route path="/login" component={Login}/> */}
+          {/* <Route path="/register" component={Register}/> */}
+          {/* <Route path="/users" component={allUsers}/>
+          <Route path="/user" component={allUsers}/>
+          <Route path="/:username" component={User}/> */}
+          {/* <Route component={Main} /> */}
+        </Router>
+      );
+    // }
+  }
 }
 
 export default App;

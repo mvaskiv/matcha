@@ -19,6 +19,8 @@ $container['logger'] = function($c) {
     return $logger;
 };
 
+$container['upload_directory'] = __DIR__ . '/uploads';
+
 $container['db'] = function ($container) {
     $db = $container['settings']['db'];
     $pdo = new PDO('mysql:host=' . $db['host'] . ';dbname=' . $db['dbname'],
@@ -34,6 +36,18 @@ $container['RegistrationController'] = function($container){
 
 $container['LoginController'] = function($container){
   return new \App\Controllers\LoginController;
+};
+
+$container['MyprofileController'] = function($container){
+  return new \App\Controllers\MyprofileController;
+};
+
+$container['UsersController'] = function($container){
+  return new \App\Controllers\UsersController;
+};
+
+$container['UploadController'] = function($container){
+  return new \App\Controllers\UploadController;
 };
 
 require_once __DIR__.'/../app/routes.php';
