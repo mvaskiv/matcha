@@ -21,11 +21,11 @@ class UploadController extends BasicToken {
   public function insert($request, $response){
     $this->parsedBody = $request->getParsedBody();
     $this->init();
-    if (!isset($this->parsedBody['id']) || !isset($this->parsedBody['token'])){
-      $this->rt['status'] = 'ko';
-      $this->rt['error'] = 'no id or token';
-      return json_encode($this->rt);
-    }
+    // if (!isset($this->parsedBody['id']) || !isset($this->parsedBody['token'])){
+    //   $this->rt['status'] = 'ko';
+    //   $this->rt['error'] = 'no id or token';
+    //   return json_encode($this->rt);
+    // }
     if (!isset($this->parsedBody['img'])){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'no img';
@@ -36,12 +36,13 @@ class UploadController extends BasicToken {
 
 
     $imageData = file_get_contents("php://input");
-    echo "works"."\n";
-    $tmp = preg_split('/img=/', $this->parsedBody['img']);
-    $imageData = $tmp[0];
+    //echo "works"."\n";
+    $tmp = preg_split('/img=/', $imageData);
+    $imageData = $tmp[1];
+    //echo $imageDate."\n";
     $arr = preg_split('/base64,/', $imageData);
     $filteredData=substr($imageData, strpos($imageData, ",") + 1);
-    echo $filteredData."\n";
+    //echo $filteredData."\n";
     $unencodedData=base64_decode($filteredData);
 
     $name = $this->getImgName($arr[0]);
@@ -50,19 +51,30 @@ class UploadController extends BasicToken {
   }
 
   public function writeToDB($name, $user_id){
+    echo $name." i dan't beliave\n";
     $stmt = $this->conn->prepare("SELECT * FROM `fotos` WHERE `id_user` = ?");
     if ($stmt->execute([$user_id])){
       $row = $stmt->fetch();
-      if (!isset($row['all_foto'])){
-        $ser_str = array($name);
+      //var_dump($row);
+      if (empty($row['all_foto'])){
+        $ser_str = array('1' => $name);
+        $str = serialize($ser_str);
+        var_dump($str);
+        //print_r($ser_str);
         $stmt = $this->conn->prepare("INSERT INTO `fotos` (`id_user`, `all_foto`) VALUES(?, ?)");
-        $stmt->execute([$user_id, $ser_str]);
+        $stmt->execute([$user_id, $str]);
       }
       else{
         $ser_str = unserialize($row['all_foto']);
+        $tmp = 1;
+        foreach ($ser_str as $key => $value)
+          if ($tmp < intval($key))
+            $tmp = intval($key);
         array_push($ser_str, $name);
+        $str = serialize($ser_str);
         $stmt = $this->conn->prepare("UPDATE `fotos` SET `all_foto` = ? WHERE `id_user` = ?");
-        $stmt->execute([$ser_str, $user_id]);
+        $stmt->execute([$str, $user_id]);
+        print_r(unserialize($str));
       }
     }
   }
