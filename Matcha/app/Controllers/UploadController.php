@@ -33,17 +33,15 @@ class UploadController extends BasicToken {
     }
     if (!$this->token())
       return json_encode($this->rt);
-
-    // $imageData = file_get_contents("php://input");
-    // $tmp = preg_split('/img=/', $imageData);
     $imageData = $this->parsedBody['img'];
     $arr = preg_split('/base64,/', $imageData);
     $filteredData=substr($imageData, strpos($imageData, ",") + 1);
     $unencodedData=base64_decode($filteredData);
-
     $name = $this->getImgName($arr[0]);
     file_put_contents(__DIR__.'/../../uploads/'.$name, $unencodedData);
     $this->writeToDB($name, $this->parsedBody['id']);
+    $this->rt['status'] = 'ok';
+    $this->rt['error'] = 'magic';
     return json_encode($this->rt);
   }
 
@@ -67,7 +65,7 @@ class UploadController extends BasicToken {
         $str = serialize($ser_str);
         $stmt = $this->conn->prepare("UPDATE `fotos` SET `all_foto` = ? WHERE `id_user` = ?");
         $stmt->execute([$str, $user_id]);
-        }
+      }
     }
   }
 
