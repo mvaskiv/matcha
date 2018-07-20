@@ -67,8 +67,7 @@ class UploadController extends BasicToken {
         $str = serialize($ser_str);
         $stmt = $this->conn->prepare("UPDATE `fotos` SET `all_foto` = ? WHERE `id_user` = ?");
         $stmt->execute([$str, $user_id]);
-        print_r(unserialize($str));
-      }
+        }
     }
   }
 
