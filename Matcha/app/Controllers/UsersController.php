@@ -40,12 +40,10 @@ class UsersController extends BasicToken {
     $usr = array();
     $start = intval($this->parsedBody['start']);
     $number = intval($this->parsedBody['number']);
-    $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto FROM user
-                                JOIN fotos on user.id = fotos.id_user LIMIT $start, $number");
+    $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto, fotos.avatar FROM user LEFT JOIN fotos ON fotos.id_user=user.id LIMIT $start, $number");
     if ($stmt->execute()){
       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-        $tmp = unserialize($row['all_foto']);
-        array_push($usr, $row, 'photos' => $tmp);
+        array_push($usr, $row);
       }
     }
   $this->rt['data'] = $usr;

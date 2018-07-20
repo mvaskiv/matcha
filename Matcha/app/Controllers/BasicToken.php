@@ -14,8 +14,7 @@ class BasicToken{
     );
     $jwt = JWT::encode($token, $this->_key);
     $decoded = JWT::decode($jwt, $this->_key, array('HS256'));
-
-    return ($jwt);
+	return ($jwt);
   }
 
   function check($token, $id){
