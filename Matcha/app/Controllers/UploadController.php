@@ -34,9 +34,9 @@ class UploadController extends BasicToken {
     if (!$this->token())
       return json_encode($this->rt);
 
-    $imageData = file_get_contents("php://input");
-    $tmp = preg_split('/img=/', $imageData);
-    $imageData = $tmp[1];
+    // $imageData = file_get_contents("php://input");
+    // $tmp = preg_split('/img=/', $imageData);
+    $imageData = $this->parsedBody['img'];
     $arr = preg_split('/base64,/', $imageData);
     $filteredData=substr($imageData, strpos($imageData, ",") + 1);
     $unencodedData=base64_decode($filteredData);
@@ -97,9 +97,10 @@ class UploadController extends BasicToken {
           $this->rt['error'] = 'wrong token';
           return false;
         }
+        $this->rt['status'] = 'ok';
     $this->rt['token'] = $this->update($this->parsedBody['token']);
   } catch (\Exception $e){
-      $this->rt['status'] = 'ok';
+      $this->rt['status'] = 'ko';
       $this->rt['error'] = 'token is broken';
       return false;
   }
