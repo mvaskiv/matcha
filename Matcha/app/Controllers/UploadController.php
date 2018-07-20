@@ -115,11 +115,12 @@ class UploadController extends BasicToken {
       $this->rt['error'] = 'no id or token or photo';
       return json_encode($this->rt);
     }
-    if (!this->token())
+    if (!$this->token())
       return json_encode($this->rt);
     $stmt = $this->conn->prepare("UPDATE `fotos` SET `avatar` = ? WHERE `id_user` = ?");
     $stmt->execute([$this->parsedBody['photo'], $this->parsedBody['id']]);
     $this->rt['status'] = 'ok';
     return json_encode($this->rt);
   }
+
 }
