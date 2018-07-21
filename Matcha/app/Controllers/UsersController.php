@@ -70,8 +70,11 @@ class UsersController extends BasicToken {
       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
         if (!empty($row['all_foto'] && !empty($row['avatar']))){
           $tmp = unserialize($row['all_foto']);
-          $row['avatar'] = $tmp[inval($row['avatar'])];
+          if (isset($tmp[inval($row['avatar'])]))
+            $row['avatar'] = $tmp[inval($row['avatar'])];
           }
+          else
+            $row['avatar'] = 'error';
           unset($row['all_foto']);
         array_push($usr, $row);
       }
