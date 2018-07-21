@@ -33,7 +33,7 @@ class MyprofileController extends BasicToken {
       $this->rt['status'] = 'ok';
     $this->rt['token'] = $this->update($this->parsedBody['token']);
   } catch (\Exception $e){
-      $this->rt['status'] = 'ok';
+      $this->rt['status'] = 'ko';
       $this->rt['error'] = 'token is broken';
       return json_encode($this->rt);
   }
@@ -42,7 +42,7 @@ class MyprofileController extends BasicToken {
 
   private function exec(){
     $this->init();
-    $stmt = $this->conn->prepare("SELECT * FROM user WHERE `id` = ?");
+    $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, user.biography, user.tags, user.date, user.sex_preference, fotos.all_foto, fotos.avatar FROM user LEFT JOIN fotos ON fotos.id_user=user.id WHERE user.id = ?");
     if (isset($this->parsedBody['viewId'])) {
       $id = $this->parsedBody['viewId'];
     } else {

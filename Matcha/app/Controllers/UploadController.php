@@ -41,7 +41,7 @@ class UploadController extends BasicToken {
     file_put_contents(__DIR__.'/../../uploads/'.$name, $unencodedData);
     $this->writeToDB($name, $this->parsedBody['id']);
     $this->rt['status'] = 'ok';
-    $this->rt['error'] = 'magic';
+    $this->rt['index'] = $name;
     return json_encode($this->rt);
   }
 
@@ -115,6 +115,16 @@ class UploadController extends BasicToken {
     $stmt = $this->conn->prepare("UPDATE `fotos` SET `avatar` = ? WHERE `id_user` = ?");
     $stmt->execute([$this->parsedBody['photo'], $this->parsedBody['id']]);
     $this->rt['status'] = 'ok';
+    // $stmt = $this->conn->prepare("SELECT * FROM `fotos` WHERE `id_user` = ?");
+    // if ($stmt->execute([$user_id])){
+    //   $stmt = $this->conn->prepare("INSERT INTO `fotos` (`id_user`, `avatar`) VALUES(?, ?)");
+    //   $stmt->execute([$this->parsedBody['id'], $this->parsedBody['photo']]);
+    //   $this->rt['status'] = 'ok';
+    // } else {
+    //   $stmt = $this->conn->prepare("UPDATE `fotos` SET `avatar` = ? WHERE `id_user` = ?");
+    //   $stmt->execute([$this->parsedBody['photo'], $this->parsedBody['id']]);
+    //   $this->rt['status'] = 'ok';
+    // }
     return json_encode($this->rt);
   }
 
