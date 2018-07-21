@@ -539,7 +539,8 @@ class Profile extends Main {
             id: localStorage.getItem('uid'),
             token: localStorage.getItem('udata')
         }
-        this._onFileChange = this._onFileChange.bind(this);
+        this._imgBase64 = this._imgBase64.bind(this);
+        this._onFileUpload = this._onFileUpload.bind(this);
     }
     
     componentDidMount() {
@@ -552,9 +553,13 @@ class Profile extends Main {
         });
     }
 
-    _onFileChange(f) {
-        var imgState = {img: f['base64'], id: this.state.id, token: this.state.token};
-        this.setState({imgUpload: imgState});
+    _imgBase64(f) {
+        var imgState = { img: f['base64'], id: this.state.id, token: this.state.token };
+        this.setState({ imgUpload: imgState });
+    }
+
+    async _onFileChange(f) {
+        await this._imgBase64(f);
     }
 
     _onFileUpload() {
@@ -613,7 +618,10 @@ class Profile extends Main {
                     </div> 
                     <label>Bio</label>
                     <span> { userbio } </span>
-                    <button className='btn btn-default'><FileBase64 onDone={ this._onFileChange } /></button>
+                    <div className='btn-group full'>
+                        <button className='btn btn-default half img-upl'><FileBase64 onDone={ this._onFileChange.bind(this) } /></button>
+                        <button className='btn btn-primary half' onClick={ this._onFileUpload }>Upload</button>
+                    </div>
                     <div className='ext-u-photos'>
                         <label>My Photos</label>
                     </div>

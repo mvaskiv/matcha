@@ -70,10 +70,8 @@ class UploadController extends BasicToken {
   }
 
   public function getImgName($str){
-
     $arr = preg_split('/\//', $str);
     $arr = preg_split('/;/', $arr[1]);
-
     $dir = __DIR__.'/../../uploads/';
     $max = 0;
     if (is_dir($dir)) {
@@ -95,7 +93,6 @@ class UploadController extends BasicToken {
           $this->rt['error'] = 'wrong token';
           return false;
         }
-        $this->rt['status'] = 'ok';
     $this->rt['token'] = $this->update($this->parsedBody['token']);
   } catch (\Exception $e){
       $this->rt['status'] = 'ko';

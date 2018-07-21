@@ -6,7 +6,7 @@
 
 .preloader {
   position: relative;
-  top: -3em;
+  top: 0em;
   margin-left: 38vw;
   margin-right: 38vw;
   width: 24vw;
@@ -269,6 +269,7 @@
   overflow-x: scroll;
   z-index: 2
 }
+
 .noti-panel-cnt {
   position: absolute;
   top: 0px;
@@ -284,8 +285,8 @@
   position: absolute;
   width: 100vw;
   height: 100vh;
-  padding-top: 7.2em;
-  padding-bottom: 3em;
+  padding-top: 3em;
+  padding-bottom: 3.5em;
   top: 0em;
   left: 0;
   overflow-y: scroll;
@@ -296,7 +297,7 @@
   width: 25vw;
   height: 25vw;
   position: relative;
-  top: -70px;
+  top: 0px;
   margin: 4.1vw;
   border-color: #292929;
   border-style: solid;
@@ -323,6 +324,7 @@
 
 .u-thumb-wrapper {
   position: relative;
+  top: 0em;
   float: left;
   height: 36vw;
   text-align: center;
@@ -336,7 +338,7 @@
 }
 .u-thumb-name {
   position: absolute;
-  bottom: 3.2em;
+  bottom: -1.4em;
   left: 0;
   right: 0;
   margin-left: auto;
@@ -434,6 +436,11 @@ img.profile-img {
   width: 7em;
   height: 7em;
   border-radius: 100em;
+}
+.img-upl {
+  color: #eee;
+  border: none;
+  background-color: #eee;
 }
 .basic-u-info {
   position: absolute;
