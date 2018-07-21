@@ -533,6 +533,7 @@ class Profile extends Main {
     constructor() {
         super();
         this.state = {
+            avaUploadBox: false,
             edit: false,
             imgUpload: false,
             me: '',
@@ -582,6 +583,14 @@ class Profile extends Main {
         return Math.abs(aT.getUTCFullYear() - 1970);
     }
 
+    _avaUploadBox(a) {
+        if (a === 1 && !this.state.avaUploadBox) {
+            this.setState({avaUploadBox: true});
+        } else {
+            this.setState({avaUploadBox: false});            
+        }
+    }
+
     render () {
         if (this.state.edit) {
             return null
@@ -594,36 +603,50 @@ class Profile extends Main {
             var userpref = this.state.me['sex_preference'] === 'M' ? 'Men' : 'Women';
             var usertag = this.state.me['tags'];
             var userbio = this.state.me['biography'];
+            var userava = this.state.me['avatar'];
             return (
             <div className='inner-cnt'>
-                <div className='profile-img'>
-                    <img onClick={() => Profile.getInfo()} className='profile-img' src='https://instagram.fiev11-1.fna.fbcdn.net/vp/476a9995baf0a2651b562d5f0d104e4e/5BEB5631/t51.2885-19/s320x320/12822425_1686185784962098_229413371_a.jpg' alt=''/>
-                </div>
-                <div className='basic-u-info'>
-                    <h3> { username }, { userage } </h3>
-                    <button className='btn btn-default'>Edit Your Profile</button>
-                </div>
-                <div className='ext-u-info'>
-                    <div className='fll half'>
-                        <label>Gender</label>
-                        <span> { usergender } </span>
-                        <label>Born on</label>
-                        <span> { userdob } </span>
+                <div className='basic-u-info-cnt'>
+                    <div className='profile-img'>
+                        <img onClick={() => this._avaUploadBox(1)} className='profile-img' src={ userava ? userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
                     </div>
-                    <div className='fll half'>
-                        <label>Seeking</label>
-                        <span> { userpref } </span>
-                        <label>Interested in</label>
-                        <span> { usertag } </span>
-                    </div> 
-                    <label>Bio</label>
-                    <span> { userbio } </span>
-                    <div className='btn-group full'>
-                        <button className='btn btn-default half img-upl'><FileBase64 onDone={ this._onFileChange.bind(this) } /></button>
-                        <button className='btn btn-primary half' onClick={ this._onFileUpload }>Upload</button>
+                    <div className='basic-u-info'>
+                        <h3> { username }, { userage } </h3>
+                        <button className='btn btn-default'>Edit Your Profile</button>
                     </div>
-                    <div className='ext-u-photos'>
-                        <label>My Photos</label>
+                </div>
+                
+                <div className='ext-u-info' style={{ marginTop: this.state.avaUploadBox ? 8.8 + 'em' : 5.4 + 'em' }} >
+                    <div className='full ava-upl rel'>
+                        <div className='btn-group w80 fll'>
+                            <button className='btn btn-default half img-upl'><FileBase64 onDone={ this._onFileChange.bind(this) } /></button>
+                            <button className='btn btn-primary half' onClick={ this._onFileUpload }>Upload</button>
+                        </div>
+                        <a href="#" style={{zIndex: 9}}><i className="far fa-times-circle flr mar5 close-ava-upl" onClick={() => this._avaUploadBox(0)}></i></a>
+                    </div>
+                    <div className='ext-u-info2'>
+                        <div className='full u-int'>
+                            <div className='fll half'>
+                                <label>Gender</label>
+                                <span> { usergender } </span>
+                                <label>Born on</label>
+                                <span> { userdob } </span>
+                            </div>
+                            <div className='fll half'>
+                                <label>Seeking</label>
+                                <span> { userpref } </span>
+                                <label>Interested in</label>
+                                <span> { usertag } </span>
+                            </div> 
+                        </div>
+                        <div className='full u-bio'>
+                            <label>Bio</label>
+                            <span> { userbio } </span>
+                        </div>
+                        
+                        <div className='ext-u-photos'>
+                            <label>My Photos</label>
+                        </div>
                     </div>
                 </div>
             </div>
