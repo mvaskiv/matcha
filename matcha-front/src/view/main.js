@@ -23,11 +23,12 @@ const UserThumb = (props) => {
     var username = props.data['f_name'];
     var userid = props.data['id'];
     var usergen = props.data['gender'];
+    var userava = props.data['avatar'];    
     var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";
 
     return (
         <div className='u-thumb-wrapper'>
-            <img onClick={() => Main.showProfile( userid )} className='user-avatar' key={this} alt={ username } src={ src } />
+            <img onClick={() => Main.showProfile( userid )} className='user-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
             <p className='u-thumb-name'> { username } </p>
         </div>
     );
@@ -533,6 +534,7 @@ class Profile extends Main {
     constructor() {
         super();
         this.state = {
+            update: false,
             avaUploadBox: false,
             edit: false,
             imgUpload: false,
@@ -545,13 +547,24 @@ class Profile extends Main {
     }
     
     componentDidMount() {
-        PostData('myprofile', this.state).then((result) => {
+        this._getMyInfo();
+    }
+
+    componentDidUpdate() {
+        if (this.state.update) {
+            this._getMyInfo();
+        }
+    }
+
+    async _getMyInfo() {
+        await PostData('myprofile', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
                 var a = responseJson[0];
-                this.setState({me: a});
+                this.setState({ me: a });
             }
         });
+        this.setState({update: false});        
     }
 
     _imgBase64(f) {
@@ -563,11 +576,31 @@ class Profile extends Main {
         await this._imgBase64(f);
     }
 
-    _onFileUpload() {
-        PostData('uploadphoto', this.state.imgUpload).then((result) => {
+    async _setAvatar(a) {
+        var imgState = { photo: a, id: this.state.id, token: this.state.token };
+        await this.setState({imgUpload: imgState});
+        console.log(a);
+        PostData('myprofile/avatar', this.state.imgUpload).then((result) => {
             let responseJson = result;
             if (responseJson) {
                 if (responseJson.status === 'ok') {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+    }
+
+    async _onFileUpload() {
+        await PostData('uploadphoto', this.state.imgUpload).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                if (responseJson.status === 'ok') {
+                    if (!this._setAvatar(responseJson.index)) {
+                        alert('fuck');
+                    }
+                    this.setState({update: true});
                     alert("Your image has been successfully uploaded!");
                 } else {
                     alert("Ooops... Something's gone wrong. Please try again.");
@@ -591,6 +624,23 @@ class Profile extends Main {
         }
     }
 
+    async _deletePic(i) {
+        if (window.confirm('Do you really wanna delete it?')) {
+            var imgState = { delphoto: i, id: this.state.id, token: this.state.token };        
+            await PostData('delphoto', imgState).then((result) => {
+                let responseJson = result;
+                if (responseJson) {
+                    if (responseJson.status === 'ok') {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            });
+            this.setState({update: true});
+        }
+    }
+
     render () {
         if (this.state.edit) {
             return null
@@ -604,11 +654,15 @@ class Profile extends Main {
             var usertag = this.state.me['tags'];
             var userbio = this.state.me['biography'];
             var userava = this.state.me['avatar'];
+            var upics = JSON.parse(this.state.me['all_foto']);
+            const userphotos = upics.map((photo, i) => {
+                return <div className='photo-thumb-cnt'><img className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} /><p onClick={() => this._deletePic(i)}>delete</p></div>
+            })
             return (
             <div className='inner-cnt'>
                 <div className='basic-u-info-cnt'>
                     <div className='profile-img'>
-                        <img onClick={() => this._avaUploadBox(1)} className='profile-img' src={ userava ? userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
+                        <img onClick={() => this._avaUploadBox(1)} className='profile-img' src={ userava ? 'Matcha/uploads/' + userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
                     </div>
                     <div className='basic-u-info'>
                         <h3> { username }, { userage } </h3>
@@ -646,6 +700,7 @@ class Profile extends Main {
                         
                         <div className='ext-u-photos'>
                             <label>My Photos</label>
+                            { userphotos }
                         </div>
                     </div>
                 </div>

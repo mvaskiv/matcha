@@ -50,21 +50,20 @@ class UploadController extends BasicToken {
     if ($stmt->execute([$user_id])){
       $row = $stmt->fetch();
       if (empty($row['all_foto'])){
-        $ser_str = array('1' => $name);
-        $str = serialize($ser_str);
+        $ser_str = array();
+                array_push($ser_str, $name);
         $stmt = $this->conn->prepare("INSERT INTO `fotos` (`id_user`, `all_foto`) VALUES(?, ?)");
-        $stmt->execute([$user_id, $str]);
+        $stmt->execute([$user_id, json_encode($ser_str)]);
       }
-      else{
-        $ser_str = unserialize($row['all_foto']);
-        $tmp = 1;
-        foreach ($ser_str as $key => $value)
-          if ($tmp < intval($key))
-            $tmp = intval($key);
+      else {
+        $ser_str = json_decode($row['all_foto']);
+        $tmp = 0;
+        foreach ($ser_str as $key => $value) {
+          $tmp++;
+        }
         array_push($ser_str, $name);
-        $str = serialize($ser_str);
         $stmt = $this->conn->prepare("UPDATE `fotos` SET `all_foto` = ? WHERE `id_user` = ?");
-        $stmt->execute([$str, $user_id]);
+        $stmt->execute([json_encode($ser_str), $user_id]);
       }
     }
   }
@@ -115,6 +114,27 @@ class UploadController extends BasicToken {
     $stmt = $this->conn->prepare("UPDATE `fotos` SET `avatar` = ? WHERE `id_user` = ?");
     $stmt->execute([$this->parsedBody['photo'], $this->parsedBody['id']]);
     $this->rt['status'] = 'ok';
+    return json_encode($this->rt);
+  }
+
+  public function delete($request, $response){
+    $this->parsedBody = $request->getParsedBody();
+    $this->init();
+    if ((intval($this->parsedBody['delphoto']) < 0) || !isset($this->parsedBody['token']) || !isset($this->parsedBody['id'])) {
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no id or token or photo';
+      return json_encode($this->rt);
+    }
+    $stmt = $this->conn->prepare("SELECT * FROM `fotos` WHERE `id_user` = ?");
+    if ($stmt->execute([$this->parsedBody['id']])){
+      $row = $stmt->fetch();
+      
+        $ser_str = json_decode($row['all_foto']);
+        array_splice($ser_str, $this->parsedBody['delphoto'], 1);
+        $stmt = $this->conn->prepare("UPDATE `fotos` SET `all_foto` = ? WHERE `id_user` = ?");
+        $stmt->execute([json_encode($ser_str), $this->parsedBody['id']]);
+        $this->rt['status'] = $this->parsedBody['delphoto'];
+    }
     return json_encode($this->rt);
   }
 
