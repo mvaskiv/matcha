@@ -71,7 +71,6 @@ class UsersController extends BasicToken {
         if (!empty($row['all_foto'] && !empty($row['avatar']))){
           $tmp = unserialize($row['all_foto']);
           $row['avatar'] = $tmp[inval($row['avatar'])];
-          echo "here\n\n";
           }
           unset($row['all_foto']);
         array_push($usr, $row);
