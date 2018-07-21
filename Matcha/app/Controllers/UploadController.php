@@ -41,7 +41,7 @@ class UploadController extends BasicToken {
     file_put_contents(__DIR__.'/../../uploads/'.$name, $unencodedData);
     $this->writeToDB($name, $this->parsedBody['id']);
     $this->rt['status'] = 'ok';
-    $this->rt['error'] = 'magic';
+    $this->rt['index'] = $name;
     return json_encode($this->rt);
   }
 
