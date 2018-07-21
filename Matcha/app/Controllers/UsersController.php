@@ -37,6 +37,11 @@ class UsersController extends BasicToken {
       $this->rt['error'] = 'no gender';
       return json_encode($this->rt);
     }
+    if ($this->parsedBody['sort'] == 'age_gender' && (!isset($this->parsedBody['gender']) || !isset($this->parsedBody['start_age']) || !isset($this->parsedBody['end_age']))){
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no gender or start_age or end_age';
+      return json_encode($this->rt);
+    }
     if ($this->parsedBody['number'] > $row_q) {
       $this->rt['status'] = 'dbEnd';
       $this->rt['error'] = 'database end reached';
@@ -68,6 +73,16 @@ class UsersController extends BasicToken {
            FROM user LEFT JOIN fotos ON fotos.id_user=user.id
           WHERE `gender` = '$gender' LIMIT $start, $number");
       }
+      else if ($this->parsedBody['sort'] == 'age_gender'){
+        $start_age = $this->parsedBody['start_age'];
+        $end_age = $this->parsedBody['end_age'];
+        $gender = $this->parsedBody['gender'];
+        $stmt = $this->conn->prepare("SELECT
+          user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto, fotos.avatar
+           FROM user LEFT JOIN fotos ON fotos.id_user=user.id
+          WHERE TIMESTAMPDIFF(YEAR, `date`, CURDATE()) > $start_age and TIMESTAMPDIFF(YEAR, `date`, CURDATE()) < $end_age
+          and `gender` = '$gender'  LIMIT $start, $number");
+        }
       else{
         $this->rt['status'] = 'ko';
         $this->rt['error'] = 'sort error';
