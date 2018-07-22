@@ -4,17 +4,27 @@ namespace App\Retchet;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
+class Myclent extends \SplObjectStorage{
+  public function rt(){
+    return "work";
+  }
+}
+
 class Chat implements MessageComponentInterface {
     protected $clients;
+    protected $var;
 
-    public function __construct() {
-        $this->clients = new \SplObjectStorage;
+    public function __construct($var) {
+        // $this->clients = new \SplObjectStorage;
+        $this->clients = new Myclent;
+        $this->var = $var;
     }
 
     public function onOpen(ConnectionInterface $conn) {
         // Store the new connection to send messages to later
         $this->clients->attach($conn);
-
+        //var_dump($conn);
+        //var_dump($this->clients);
         echo "New connection! ({$conn->resourceId})\n";
     }
 
@@ -24,10 +34,15 @@ class Chat implements MessageComponentInterface {
             , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
         foreach ($this->clients as $client) {
-            if ($from !== $client) {
+            // print_r($client->resourceId);
+            // if ($from === $client) {
                 // The sender is not the receiver, send to each client connected
-                $client->send($msg);
-            }
+                //$client->send(45, $msg);
+                //$client->send($this->clients->rt());
+          //  }
+          if (45 == $client->resourceId) {
+                $client->send($this->var);
+   }
         }
     }
 
