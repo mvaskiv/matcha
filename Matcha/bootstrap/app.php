@@ -50,4 +50,8 @@ $container['UploadController'] = function($container){
   return new \App\Controllers\UploadController;
 };
 
+$container['ChatController'] = function($container){
+  return new \App\Controllers\ChatController;
+};
+
 require_once __DIR__.'/../app/routes.php';

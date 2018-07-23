@@ -134,8 +134,6 @@
             "time": "2017-07-23T21:35:13+00:00"
         },
         {
-<<<<<<< HEAD
-=======
             "name": "firebase/php-jwt",
             "version": "v5.0.0",
             "source": {
@@ -182,7 +180,6 @@
             "time": "2017-06-27T22:17:23+00:00"
         },
         {
->>>>>>> 0299cbb96a474cdd2cd548d4d7eb963f1e39b14b
             "name": "guzzlehttp/psr7",
             "version": "1.4.2",
             "source": {

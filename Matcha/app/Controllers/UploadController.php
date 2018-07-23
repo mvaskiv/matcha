@@ -33,17 +33,15 @@ class UploadController extends BasicToken {
     }
     if (!$this->token())
       return json_encode($this->rt);
-
-    $imageData = file_get_contents("php://input");
-    $tmp = preg_split('/img=/', $imageData);
-    $imageData = $tmp[1];
+    $imageData = $this->parsedBody['img'];
     $arr = preg_split('/base64,/', $imageData);
     $filteredData=substr($imageData, strpos($imageData, ",") + 1);
     $unencodedData=base64_decode($filteredData);
-
     $name = $this->getImgName($arr[0]);
     file_put_contents(__DIR__.'/../../uploads/'.$name, $unencodedData);
     $this->writeToDB($name, $this->parsedBody['id']);
+    $this->rt['status'] = 'ok';
+    $this->rt['index'] = $name;
     return json_encode($this->rt);
   }
 
@@ -52,31 +50,27 @@ class UploadController extends BasicToken {
     if ($stmt->execute([$user_id])){
       $row = $stmt->fetch();
       if (empty($row['all_foto'])){
-        $ser_str = array('1' => $name);
-        $str = serialize($ser_str);
+        $ser_str = array();
+                array_push($ser_str, $name);
         $stmt = $this->conn->prepare("INSERT INTO `fotos` (`id_user`, `all_foto`) VALUES(?, ?)");
-        $stmt->execute([$user_id, $str]);
+        $stmt->execute([$user_id, json_encode($ser_str)]);
       }
-      else{
-        $ser_str = unserialize($row['all_foto']);
-        $tmp = 1;
-        foreach ($ser_str as $key => $value)
-          if ($tmp < intval($key))
-            $tmp = intval($key);
+      else {
+        $ser_str = json_decode($row['all_foto']);
+        $tmp = 0;
+        foreach ($ser_str as $key => $value) {
+          $tmp++;
+        }
         array_push($ser_str, $name);
-        $str = serialize($ser_str);
         $stmt = $this->conn->prepare("UPDATE `fotos` SET `all_foto` = ? WHERE `id_user` = ?");
-        $stmt->execute([$str, $user_id]);
-        print_r(unserialize($str));
+        $stmt->execute([json_encode($ser_str), $user_id]);
       }
     }
   }
 
   public function getImgName($str){
-
     $arr = preg_split('/\//', $str);
     $arr = preg_split('/;/', $arr[1]);
-
     $dir = __DIR__.'/../../uploads/';
     $max = 0;
     if (is_dir($dir)) {
@@ -100,7 +94,7 @@ class UploadController extends BasicToken {
         }
     $this->rt['token'] = $this->update($this->parsedBody['token']);
   } catch (\Exception $e){
-      $this->rt['status'] = 'ok';
+      $this->rt['status'] = 'ko';
       $this->rt['error'] = 'token is broken';
       return false;
   }
@@ -115,11 +109,33 @@ class UploadController extends BasicToken {
       $this->rt['error'] = 'no id or token or photo';
       return json_encode($this->rt);
     }
-    if (!this->token())
+    if (!$this->token())
       return json_encode($this->rt);
     $stmt = $this->conn->prepare("UPDATE `fotos` SET `avatar` = ? WHERE `id_user` = ?");
     $stmt->execute([$this->parsedBody['photo'], $this->parsedBody['id']]);
     $this->rt['status'] = 'ok';
     return json_encode($this->rt);
   }
+
+  public function delete($request, $response){
+    $this->parsedBody = $request->getParsedBody();
+    $this->init();
+    if ((intval($this->parsedBody['delphoto']) < 0) || !isset($this->parsedBody['token']) || !isset($this->parsedBody['id'])) {
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no id or token or photo';
+      return json_encode($this->rt);
+    }
+    $stmt = $this->conn->prepare("SELECT * FROM `fotos` WHERE `id_user` = ?");
+    if ($stmt->execute([$this->parsedBody['id']])){
+      $row = $stmt->fetch();
+      
+        $ser_str = json_decode($row['all_foto']);
+        array_splice($ser_str, $this->parsedBody['delphoto'], 1);
+        $stmt = $this->conn->prepare("UPDATE `fotos` SET `all_foto` = ? WHERE `id_user` = ?");
+        $stmt->execute([json_encode($ser_str), $this->parsedBody['id']]);
+        $this->rt['status'] = $this->parsedBody['delphoto'];
+    }
+    return json_encode($this->rt);
+  }
+
 }
