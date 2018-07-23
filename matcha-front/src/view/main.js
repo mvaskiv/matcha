@@ -23,11 +23,12 @@ const UserThumb = (props) => {
     var username = props.data['f_name'];
     var userid = props.data['id'];
     var usergen = props.data['gender'];
+    var userava = props.data['avatar'];    
     var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";
 
     return (
         <div className='u-thumb-wrapper'>
-            <img onClick={() => Main.showProfile( userid )} className='user-avatar' key={this} alt={ username } src={ src } />
+            <img onClick={() => Main.showProfile( userid )} className='user-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
             <p className='u-thumb-name'> { username } </p>
         </div>
     );
@@ -533,35 +534,73 @@ class Profile extends Main {
     constructor() {
         super();
         this.state = {
+            update: false,
+            avaUploadBox: false,
             edit: false,
             imgUpload: false,
             me: '',
             id: localStorage.getItem('uid'),
             token: localStorage.getItem('udata')
         }
-        this._onFileChange = this._onFileChange.bind(this);
+        this._imgBase64 = this._imgBase64.bind(this);
+        this._onFileUpload = this._onFileUpload.bind(this);
     }
     
     componentDidMount() {
-        PostData('myprofile', this.state).then((result) => {
+        this._getMyInfo();
+    }
+
+    componentDidUpdate() {
+        if (this.state.update) {
+            this._getMyInfo();
+        }
+    }
+
+    async _getMyInfo() {
+        await PostData('myprofile', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
                 var a = responseJson[0];
-                this.setState({me: a});
+                this.setState({ me: a });
+            }
+        });
+        this.setState({update: false});        
+    }
+
+    _imgBase64(f) {
+        var imgState = { img: f['base64'], id: this.state.id, token: this.state.token };
+        this.setState({ imgUpload: imgState });
+    }
+
+    async _onFileChange(f) {
+        await this._imgBase64(f);
+    }
+
+    async _setAvatar(a) {
+        var imgState = { photo: a, id: this.state.id, token: this.state.token };
+        await this.setState({imgUpload: imgState});
+        console.log(a);
+        PostData('myprofile/avatar', this.state.imgUpload).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                if (responseJson.status === 'ok') {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         });
     }
 
-    _onFileChange(f) {
-        var imgState = {img: f['base64'], id: this.state.id, token: this.state.token};
-        this.setState({imgUpload: imgState});
-    }
-
-    _onFileUpload() {
-        PostData('uploadphoto', this.state.imgUpload).then((result) => {
+    async _onFileUpload() {
+        await PostData('uploadphoto', this.state.imgUpload).then((result) => {
             let responseJson = result;
             if (responseJson) {
                 if (responseJson.status === 'ok') {
+                    if (!this._setAvatar(responseJson.index)) {
+                        alert('fuck');
+                    }
+                    this.setState({update: true});
                     alert("Your image has been successfully uploaded!");
                 } else {
                     alert("Ooops... Something's gone wrong. Please try again.");
@@ -577,6 +616,31 @@ class Profile extends Main {
         return Math.abs(aT.getUTCFullYear() - 1970);
     }
 
+    _avaUploadBox(a) {
+        if (a === 1 && !this.state.avaUploadBox) {
+            this.setState({avaUploadBox: true});
+        } else {
+            this.setState({avaUploadBox: false});            
+        }
+    }
+
+    async _deletePic(i) {
+        if (window.confirm('Do you really wanna delete it?')) {
+            var imgState = { delphoto: i, id: this.state.id, token: this.state.token };        
+            await PostData('delphoto', imgState).then((result) => {
+                let responseJson = result;
+                if (responseJson) {
+                    if (responseJson.status === 'ok') {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            });
+            this.setState({update: true});
+        }
+    }
+
     render () {
         if (this.state.edit) {
             return null
@@ -589,33 +653,55 @@ class Profile extends Main {
             var userpref = this.state.me['sex_preference'] === 'M' ? 'Men' : 'Women';
             var usertag = this.state.me['tags'];
             var userbio = this.state.me['biography'];
+            var userava = this.state.me['avatar'];
+            var upics = JSON.parse(this.state.me['all_foto']);
+            const userphotos = upics.map((photo, i) => {
+                return <div className='photo-thumb-cnt'><img className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} /><p onClick={() => this._deletePic(i)}>delete</p></div>
+            })
             return (
             <div className='inner-cnt'>
-                <div className='profile-img'>
-                    <img onClick={() => Profile.getInfo()} className='profile-img' src='https://instagram.fiev11-1.fna.fbcdn.net/vp/476a9995baf0a2651b562d5f0d104e4e/5BEB5631/t51.2885-19/s320x320/12822425_1686185784962098_229413371_a.jpg' alt=''/>
-                </div>
-                <div className='basic-u-info'>
-                    <h3> { username }, { userage } </h3>
-                    <button className='btn btn-default'>Edit Your Profile</button>
-                </div>
-                <div className='ext-u-info'>
-                    <div className='fll half'>
-                        <label>Gender</label>
-                        <span> { usergender } </span>
-                        <label>Born on</label>
-                        <span> { userdob } </span>
+                <div className='basic-u-info-cnt'>
+                    <div className='profile-img'>
+                        <img onClick={() => this._avaUploadBox(1)} className='profile-img' src={ userava ? 'Matcha/uploads/' + userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
                     </div>
-                    <div className='fll half'>
-                        <label>Seeking</label>
-                        <span> { userpref } </span>
-                        <label>Interested in</label>
-                        <span> { usertag } </span>
-                    </div> 
-                    <label>Bio</label>
-                    <span> { userbio } </span>
-                    <button className='btn btn-default'><FileBase64 onDone={ this._onFileChange } /></button>
-                    <div className='ext-u-photos'>
-                        <label>My Photos</label>
+                    <div className='basic-u-info'>
+                        <h3> { username }, { userage } </h3>
+                        <button className='btn btn-default'>Edit Your Profile</button>
+                    </div>
+                </div>
+                
+                <div className='ext-u-info' style={{ marginTop: this.state.avaUploadBox ? 8.8 + 'em' : 5.4 + 'em' }} >
+                    <div className='full ava-upl rel'>
+                        <div className='btn-group w80 fll'>
+                            <button className='btn btn-default half img-upl'><FileBase64 onDone={ this._onFileChange.bind(this) } /></button>
+                            <button className='btn btn-primary half' onClick={ this._onFileUpload }>Upload</button>
+                        </div>
+                        <a href="#" style={{zIndex: 9}}><i className="far fa-times-circle flr mar5 close-ava-upl" onClick={() => this._avaUploadBox(0)}></i></a>
+                    </div>
+                    <div className='ext-u-info2'>
+                        <div className='full u-int'>
+                            <div className='fll half'>
+                                <label>Gender</label>
+                                <span> { usergender } </span>
+                                <label>Born on</label>
+                                <span> { userdob } </span>
+                            </div>
+                            <div className='fll half'>
+                                <label>Seeking</label>
+                                <span> { userpref } </span>
+                                <label>Interested in</label>
+                                <span> { usertag } </span>
+                            </div> 
+                        </div>
+                        <div className='full u-bio'>
+                            <label>Bio</label>
+                            <span> { userbio } </span>
+                        </div>
+                        
+                        <div className='ext-u-photos'>
+                            <label>My Photos</label>
+                            { userphotos }
+                        </div>
                     </div>
                 </div>
             </div>
