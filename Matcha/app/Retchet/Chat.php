@@ -1,9 +1,11 @@
 <?php
 namespace App\Retchet;
 
+
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 use App\Retchet\UserIndetify;
+
 
 class Chat implements MessageComponentInterface {
     protected $clients;
@@ -17,8 +19,10 @@ class Chat implements MessageComponentInterface {
     public function onOpen(ConnectionInterface $conn) {
         // Store the new connection to send messages to later
         $this->clients->attach($conn);
-        $this->user->addUser(3 ,$conn->resourceId);
-        echo "New connection! ({$conn->resourceId})\n";
+        $querystring = (explode('=', $conn->httpRequest->getUri()->getQuery()))[1];
+        $this->user->addUser($querystring ,$conn->resourceId);
+
+        echo "New connection! ({$conn->resourceId}) id ({$querystring})\n";
     }
 
     public function onMessage(ConnectionInterface $from, $msg) {

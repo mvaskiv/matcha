@@ -7,7 +7,7 @@
 <p>Chat script</p>
 <body>
   <script>
-  var conn = new WebSocket('ws://localhost:8200');
+  var conn = new WebSocket('ws://localhost:8200?id=1');
 conn.onopen = function(e) {
     console.log("Connection established!");
 };
