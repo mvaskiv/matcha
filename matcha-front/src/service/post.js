@@ -1,5 +1,5 @@
 export function PostData(type, data) {
-    let BaseURL = '/Matcha/public/';
+    let BaseURL = '/';
     return new Promise((resolve, reject) => {
         fetch(BaseURL+type, {
             method: 'POST',
