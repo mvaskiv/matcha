@@ -33,6 +33,8 @@ class Chat implements MessageComponentInterface {
         echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
             , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
+        print_r($from->resourceId);
+        return ;
         $tmp = json_decode($json, true);
         if (!($token =$this->user->checkInput($tmp))){
           $this->rt['status'] = 'ko';
@@ -54,8 +56,8 @@ class Chat implements MessageComponentInterface {
 
 
         foreach ($this->clients as $client) {
-           if ($this->user->receiver($tmp['to']) === $client) {
-             $client->send(json_encode($tmp['msg']));
+           if ($this->user->receiver($tmp['to']) === $client->resourceId) {
+             $client->send($tmp['msg']);
            }
          }
     }

@@ -28,7 +28,8 @@ class UserIndetify extends BasicToken {
 }
 
 public function checkInput(array $tmp){
-  if (!isset($tmp['id']) || !isset($tmp['token']) || !isset($tmp['to']))
+  if (!isset($tmp['id']) || !isset($tmp['token']) || !isset($tmp['to']
+        || !isset($tmp['status'])))
     return false;
   if (!$this->check($tmp['token'], $tmp['id']))
     return false;
