@@ -41,7 +41,10 @@ class BrowseUsers extends Component {
             dbEnd: false,
             uid: '',
             users: '',
-            sort: '0',
+            sort: 'age',
+            gender: false,
+            start_age: 9,
+            end_age: 99,
             start: '0',
             number: 21
         }
@@ -55,6 +58,11 @@ class BrowseUsers extends Component {
             if (responseJson) {
                 var a = responseJson.data;
                 this.setState({users: a});
+                if (responseJson.status === 'dbEnd') {
+                    this.setState({dbEnd: true});
+                    this.ulist.removeEventListener('scroll', this._scrollListener);
+                    return ;
+                }
             }
         });
     }
@@ -79,13 +87,13 @@ class BrowseUsers extends Component {
         PostData('users', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
+                var a = responseJson.data;
+                this.setState({users: a});
                 if (responseJson.status === 'dbEnd') {
                     this.setState({dbEnd: true});
                     this.ulist.removeEventListener('scroll', this._scrollListener);
                     return ;
                 }
-                var a = responseJson.data;
-                this.setState({users: a});
             }
         });
     }
@@ -96,16 +104,18 @@ class BrowseUsers extends Component {
         } else {
             // var users = [['Kate', '1'], ['John', '2'], ['Vasya', '3'], ['Alice', '4']];
             var UserMap = this.state.users.map((user, i) => {
-                return (
-                    <UserThumb key={i} data={ user } />
-                );
+                if (user.id !== localStorage.getItem('uid')) {
+                    return (
+                        <UserThumb key={i} data={ user } />
+                    );
+                }
             });
             
             return (
                 <div className='showAllUsers' ref={ulist => {this.ulist = ulist;}}>
                     { UserMap }
-                    <img className='preloader' src="http://www.wellnessexpome.com/wp-content/uploads/2018/06/pre-loader.gif"
-                    style={{display: this.state.dbEnd ? 'none' : 'block'}}/>
+                    <div className='preload-cnt'><img className='preloader' src="http://www.wellnessexpome.com/wp-content/uploads/2018/06/pre-loader.gif"
+                    style={{display: this.state.dbEnd ? 'none' : 'block'}}/></div>
                 </div>
             );
         }
@@ -139,7 +149,7 @@ const MenuSelf = (props) => (
         <nav className='full'>
         <a href='#home' className={(props.item === 'home' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("home")}><i className="fas fa-home"></i></a>
         <a className={(props.item === 'notifications' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("notifications")}><i className="far fa-bell"></i></a>
-        <a className={(props.item === 'search' ? 'menulink-sel' : 'menulink')}><i className="fas fa-search"></i></a>
+        <a className={(props.item === 'search' ? 'menulink-sel' : 'menulink')} onClick={() => Main._callSearch(1)}><i className="fas fa-search"></i></a>
         <a className={(props.item === 'profile' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("profile")}><i className="fas fa-user-astronaut"></i></a>
         <a className={(props.item === 'settings' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("settings")}><i className="fas fa-sliders-h"></i></a>
         </nav>
@@ -163,6 +173,7 @@ class Main extends Component {
             hideMenuBar: false,
             showMenu: false,
             showMessages: false,
+            showSearch: false,
             display: 'home',
             previous: ''
         };
@@ -172,6 +183,7 @@ class Main extends Component {
         Main.callMenuItem = Main.callMenuItem.bind(this);
         Main.showProfile = Main.showProfile.bind(this);
         Main.hideMenuBar = Main.hideMenuBar.bind(this);
+        Main._callSearch = Main._callSearch.bind(this);
     }
 
     static hideMenuBar(a) {
@@ -190,6 +202,15 @@ class Main extends Component {
         if (a === 1) {this.setState({showMessages: true});}
         else {this.setState({showMessages: false});}
     }
+
+    static _callSearch(a) {
+        if (a === 1 && !this.state.showSearch) {
+            this.setState({showSearch: true});
+        } else {
+            this.setState({showSearch: false});
+        }
+    }
+
     static callMenuItem(a) {
         if (a === 'settings') {
             this.setState({showMenu: true});    
@@ -225,11 +246,50 @@ class Main extends Component {
                     <div className='menus-panel' style={{bottom: this.state.showMenu ? 100 + '%' : 0 + 'px'}}>
                         <MenuBar display={this.state.display} />
                     </div>
+                    <div className='search-panel' style={{bottom: this.state.showSearch ? 0 + 'em' : -30 + 'em'}}>
+                        <SearchPanel />
+                    </div>
                 </div>
                 <div className='noti-panel-cnt' style={{transform: this.state.showMessages ? 'translateX(-100%)' : 'translateX(0%)'}}>
                     <Messages />
                 </div>
                 
+            </div>
+        );
+    }
+}
+
+class SearchPanel extends Component {
+    constructor() {
+        super();
+        this.state = {
+            age_l: 18,
+            age_u: 36
+        };
+        this._sliderChange = this._sliderChange.bind(this);
+    }
+
+    _sliderChange(e) {
+        // if (e.target.name === 'age_u' && e.target.value > this.state.age_l) {
+            this.setState({[e.target.name]:e.target.value});            
+        // } else if (e.target.name === 'age_l' && e.target.value > this.state.age_l) {
+        //     this.setState({[e.target.name]:e.target.value});                        
+        // } 
+    }
+
+    render () {
+
+        return (
+            <div>
+                <h2> &nbsp; Search </h2>
+                
+                <div className='age-slider'>
+                <p className='p-l'>{ this.state.age_l }</p>
+                    <input min='18' max='100' step='1' type='range' value={this.state.age_l} onChange={this._sliderChange} name='age_l' />
+                    <input min='18' max='100' step='1' type='range' value={this.state.age_u} onChange={this._sliderChange} name='age_u'/>
+                <p className='p-u'>{ this.state.age_u }</p>
+                </div>
+
             </div>
         );
     }
@@ -364,20 +424,41 @@ class Chat extends Messages {
         super(props);
         this.state = {
             focus: false,
+            updated: false,
             newMessage: '',
-            messages: [['Hey', '1'], ['Go away', '0'], ['Why??!?!?!??!?!?!?!', '1'], ['Because', '0'], ['Noooo', '1'], ['Pleaseeeee', '1'], ['Hey', '1'], ['Go away', '0'], ['Why??!?!?!??!?!?!?!', '1'], ['Because', '0'], ['Noooo', '1'], ['Pleaseeeee', '1']]
+            messages: [['Hey', '1'], ['Go away', '0'], ['Why??!?!?!??!?!?!?!', '1'], ['Because', '0'], ['Noooo', '1'], ['Pleaseeeee', '1'], ['Hey', '1'], ['Go away', '0']]
         }
         this.testMessage = this.testMessage.bind(this);
         this.InputOnFocus = this.InputOnFocus.bind(this);
         this.onChange = this.onChange.bind(this);
+        this.conn = new WebSocket('ws://localhost:8200?id=' + localStorage.getItem('uid'));
+        this.conn.onmessage = (e) => {
+            // console.log(str.message);            
+            this._msgReceived(e.data);
+        };
+    }
+
+    async _msgReceived(e) {
+        var str = JSON.parse(e);
+        console.log(str.sender);
+        
+        await this.state.messages.push([str.message, str.sender]);
+        // this.setState({updated: true});
     }
 
     componentDidMount() {
         this.msglst.lastChild.scrollIntoView(!0);
+        this.conn.onopen = function(e) {
+            console.log("Connection established!");
+        };
+        
     }
 
     componentDidUpdate() {
         this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        // if (this.state.updated) {
+        //     this.setState({updated: false});
+        // }
     }
 
     onChange(e) {
@@ -386,7 +467,10 @@ class Chat extends Messages {
 
     testMessage() {
         if (this.state.newMessage) {
-            this.state.messages.push([this.state.newMessage, '0']);
+            var message = {message: this.state.newMessage, sender: localStorage.getItem('uid')};
+            var messageState = JSON.stringify({status: 'msg', to: '103', token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)});
+            this.conn.send(messageState);
+            this.state.messages.push([this.state.newMessage, localStorage.getItem('uid')]);
             this.setState({newMessage: ''});
         }
     }
@@ -399,11 +483,12 @@ class Chat extends Messages {
     }
 
     render () {
+        var myid = localStorage.getItem('uid');
         if (this.props.id == 1) {
             var display = this.state.messages.map((message) => {
                 return (
                     <li className='msg-cps'>
-                        <p className={(message[1] == '0' ? 'sent-message btn' : 'received-message btn')}>{message[0]}<span className={(message[1] == '0' ? 'msg-time-r' : 'msg-time-l')}>22:00</span></p>
+                        <p className={(message[1] === myid ? 'sent-message btn' : 'received-message btn')}>{message[0]}<span className={(message[1] === myid ? 'msg-time-r' : 'msg-time-l')}>22:00</span></p>
                     </li>
                 );
             })
@@ -493,33 +578,45 @@ class UserProfile extends Main {
             var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";        
             return (
             <div className='inner-cnt'>
-                <div className='profile-img'>
-                    <img className='profile-img' src={ src } alt=''/>
-                </div>
-                <div className='basic-u-info'>
-                    <h3> { username }, { userage } </h3>
-                    <div className='btn-group'>
-                        <button className='btn btn-default'>Message</button>
-                        <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                <div className='basic-u-info-cnt'>
+                    <div className='profile-img'>
+                        <img className='profile-img' src={ src ? src : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
+                    </div>
+                    <div className='basic-u-info'>
+                        <h3> { username }, { userage } </h3>
+                        <div className='btn-group'>
+                            <button className='btn btn-default'>Message</button>
+                            <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                        </div>
                     </div>
                 </div>
-                <div className='ext-u-info'>
-                    <div className='fll half'>
-                        <label>Gender</label>
-                        <span> { usergender } </span>
-                        <label>Born on</label>
-                        <span> { userdob } </span>
-                    </div>
-                    <div className='fll half'>
-                        <label>Seeking</label>
-                        <span> { userpref } </span>
-                        <label>Interested in</label>
-                        <span> { usertag } </span>
-                    </div> 
-                    <label>Bio</label>
-                    <span> { userbio } </span>
-                    <div className='ext-u-photos'>
-                        <label>My Photos</label>
+                
+                <div className='ext-u-info' style={{ marginTop: this.state.avaUploadBox ? 8.8 + 'em' : 5.4 + 'em' }} >
+                    
+                    <div className='ext-u-info2'>
+                        <div className='full u-int'>
+                            <div className='fll half'>
+                                <label>Gender</label>
+                                <span> { usergender } </span>
+                                <label>Born on</label>
+                                <span> { userdob } </span>
+                            </div>
+                            <div className='fll half'>
+                                <label>Seeking</label>
+                                <span> { userpref } </span>
+                                <label>Interested in</label>
+                                <span> { usertag } </span>
+                            </div> 
+                        </div>
+                        <div className='full u-bio'>
+                            <label>Bio</label>
+                            <span> { userbio } </span>
+                        </div>
+                        
+                        <div className='ext-u-photos'>
+                            <label>Pictures</label>
+                            {/* { userphotos } */}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -540,7 +637,8 @@ class Profile extends Main {
             imgUpload: false,
             me: '',
             id: localStorage.getItem('uid'),
-            token: localStorage.getItem('udata')
+            token: localStorage.getItem('udata'),
+            displayPicture: false
         }
         this._imgBase64 = this._imgBase64.bind(this);
         this._onFileUpload = this._onFileUpload.bind(this);
@@ -580,16 +678,20 @@ class Profile extends Main {
         var imgState = { photo: a, id: this.state.id, token: this.state.token };
         await this.setState({imgUpload: imgState});
         console.log(a);
-        PostData('myprofile/avatar', this.state.imgUpload).then((result) => {
-            let responseJson = result;
-            if (responseJson) {
-                if (responseJson.status === 'ok') {
-                    return true;
-                } else {
-                    return false;
+        if (window.confirm("Would you like to use this photograph as your profile picture?")) {
+            PostData('myprofile/avatar', this.state.imgUpload).then((result) => {
+                let responseJson = result;
+                if (responseJson) {
+                    if (responseJson.status === 'ok') {
+                        this.setState({update: true});
+                        this.setState({imgUpload: false});
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     async _onFileUpload() {
@@ -597,16 +699,24 @@ class Profile extends Main {
             let responseJson = result;
             if (responseJson) {
                 if (responseJson.status === 'ok') {
-                    if (!this._setAvatar(responseJson.index)) {
-                        alert('fuck');
-                    }
+                    this._setAvatar(responseJson.index);
                     this.setState({update: true});
+                    this.setState({avaUploadBox: false});
+                    this.setState({imgUpload: false});
                     alert("Your image has been successfully uploaded!");
                 } else {
                     alert("Ooops... Something's gone wrong. Please try again.");
                 }
             }
         });
+    }
+
+    async _showPicture(i) {
+        if (i === -42) {
+            await this.setState({displayPicture: false});
+        } else {
+            await this.setState({displayPicture: i});
+        }
     }
 
     _userAge(d) {
@@ -620,7 +730,17 @@ class Profile extends Main {
         if (a === 1 && !this.state.avaUploadBox) {
             this.setState({avaUploadBox: true});
         } else {
-            this.setState({avaUploadBox: false});            
+            this.setState({avaUploadBox: false});
+            this.setState({imgUpload: false});
+        }
+    }
+
+
+    _editProfile(a) {
+        if (a === 1) {
+            this.setState({edit: true});
+        } else {
+            this.setState({edit: false});
         }
     }
 
@@ -637,13 +757,53 @@ class Profile extends Main {
                     }
                 }
             });
+            this.setState({displayPicture: false});
             this.setState({update: true});
         }
     }
 
     render () {
+        let nameInput = ['form-element'];
+        if (this.state.required) {
+            nameInput.push("f-is-danger");
+        }
         if (this.state.edit) {
-            return null
+            return (
+            <div className="Edit-Info">
+                <i className="far fa-times-circle flr mar5 close" onClick={() => this._editProfile(0)}></i>
+                <h3>&nbsp;Change your info</h3>
+                <br />
+                    <label>Nickname (optional):</label>
+                    <input type="text" className='form-element full input-ln' placeholder="Can be used as login" name='u_name' onChange={this.onChange} value={this.state.me.u_name}/>
+                    <label>First name:</label>
+                    <input type="text" className={nameInput.join(' ')} placeholder="Real name" name='f_name' onChange={this.onChange} value={this.state.me.f_name} />
+                    <label>Email:</label>
+                    <input type="email" className='form-element full input-ln' placeholder="Email" name='email' onChange={this.onChange} value={this.state.me.email} />
+                    <label>Gender and preference:</label>
+                    <div className="form-element-group full">
+                        <select className='form-element has-primary half' name="gender" onChange={this.onChange} value={this.state.me.gender}>
+                        <option value="1">Man seeking</option>
+                        <option value="2">Woman seeking</option>
+                        </select>
+                        <select className='form-element has-danger half' name="sex_preference" onChange={this.onChange} value={this.state.me.sex_preference}>
+                        <option value="2">Women</option>
+                        <option value="1">Men</option>
+                        <option value="3">Both</option>
+                        </select>
+                    </div>
+                    <label>Your interests:</label>
+                    <input type="text" className='form-element full input-ln' placeholder="e.g. 'Sex, drugs, rocknroll'" name='tags' onChange={this.onChange} value={this.state.me.tags}/>
+                    <label>Your Bio:</label>
+                    <textarea rows='4' maxLength='140' className='form-element full input-ln' placeholder="Who are you, what do you do, whom do you like?" name='biography' onChange={this.onChange} value={this.state.me.biography} />
+                    {/* <label>Change your password:</label>
+                    <input type="password" className='form-element full input-ln' placeholder="Your old password" name='password' onChange={this.onChange}/>
+                    <input type="password" className='form-element full input-ln has-danger' placeholder="Your new password" name='passwordConfirmation' onChange={this.onChange}/> */}
+                    {/* <div className='btn-group full'>
+                        <button className="btn btn-success half" onClick={this.register} style={{marginBottom: 10 + 'px'}}>Modify</button>    
+                        <button className="btn btn-danger half" onClick={this.register} style={{marginBottom: 10 + 'px'}}>Cancel</button>
+                    </div> */}
+            </div>
+            )
         } else if (this.state.me) {
             var userid = this.state.me['id'];
             var userdob = this.state.me['date'];
@@ -654,23 +814,53 @@ class Profile extends Main {
             var usertag = this.state.me['tags'];
             var userbio = this.state.me['biography'];
             var userava = this.state.me['avatar'];
-            var upics = JSON.parse(this.state.me['all_foto']);
-            const userphotos = upics.map((photo, i) => {
-                return <div className='photo-thumb-cnt'><img className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} /><p onClick={() => this._deletePic(i)}>delete</p></div>
-            })
+            var upics = this.state.me['all_foto'] ? JSON.parse(this.state.me['all_foto']) : null;
+            // const userphotos = upics.map((photo, i) => {
+            //     return (
+            //     <div className='photo-thumb-cnt'>
+            //         {/* <i onClick={() => this._deletePic(i)} className="far fa-times-circle flr mar5 del-pic"></i> */}
+            //         <img onClick={() => this._showPicture(i)} className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} />
+            //     </div>
+            //     );
+            // })
+            const pictureDisplay = (
+                <div>
+                    <div className='photo-v-head'>
+                        <h2 className="posa fll">&nbsp;Preview &amp; Edit </h2>
+                        <a href="#" style={{zIndex: 12}}><i className="far fa-times-circle flr mar5 close-photo-v-lg" onClick={() => this._showPicture(-42)}></i></a>
+                        {/* <p className="pic-v-lg-del">delete</p>
+                        <p className="pic-v-lg-seta">set as profile pic</p>               */}
+                        <div className="btn-group pic-control">
+                            <button onClick={() => this._setAvatar(upics[this.state.displayPicture])} className='btn btn-default third'><i className="fas fa-user-astronaut"></i></button>
+                            <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                            <button onClick={() => this._deletePic(this.state.displayPicture)} className='btn btn-default third'><i className="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    {/* <img className='picture-v-lg' src={ '/Matcha/uploads/' + upics[this.state.displayPicture] } alt='' /> */}
+                </div>
+            );
             return (
             <div className='inner-cnt'>
+                <div className='picture-view-lg' style={{display: this.state.displayPicture ? 'block' : 'none'}} >
+                    {pictureDisplay}
+                </div>
                 <div className='basic-u-info-cnt'>
                     <div className='profile-img'>
-                        <img onClick={() => this._avaUploadBox(1)} className='profile-img' src={ userava ? 'Matcha/uploads/' + userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
+                        <i onClick={() => this._avaUploadBox(1)} class="fas fa-plus-circle ava-plus-icon"></i>
+                        <img className='profile-img' src={ userava ? 'Matcha/uploads/' + userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
                     </div>
                     <div className='basic-u-info'>
                         <h3> { username }, { userage } </h3>
-                        <button className='btn btn-default'>Edit Your Profile</button>
+                        <button onClick={() => this._editProfile(1)} className='btn btn-default'>Edit Your Profile</button>
                     </div>
                 </div>
-                
-                <div className='ext-u-info' style={{ marginTop: this.state.avaUploadBox ? 8.8 + 'em' : 5.4 + 'em' }} >
+                <div className='ext-u-info' style={
+                    { marginTop: this.state.avaUploadBox ? 
+                        this.state.imgUpload ? 128 + 'vw' : 8.8 + 'em' :
+                        this.state.imgUpload ? 9 + 'em' : 5.4 + 'em'
+                    }
+                    } >
+                    <img className='picture-v-lg-prev' src={this.state.imgUpload ? this.state.imgUpload.img : null} />
                     <div className='full ava-upl rel'>
                         <div className='btn-group w80 fll'>
                             <button className='btn btn-default half img-upl'><FileBase64 onDone={ this._onFileChange.bind(this) } /></button>
@@ -700,7 +890,7 @@ class Profile extends Main {
                         
                         <div className='ext-u-photos'>
                             <label>My Photos</label>
-                            { userphotos }
+                            {/* { userphotos } */}
                         </div>
                     </div>
                 </div>

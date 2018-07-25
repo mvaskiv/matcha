@@ -4,7 +4,7 @@ namespace App\Retchet;
 use App\Controllers\BasicToken;
 
 class UserIndetify extends BasicToken {
-  private $pool = array();
+  public $pool = array();
 
 
   public function addUser($id, $chat_id){
@@ -13,6 +13,7 @@ class UserIndetify extends BasicToken {
       'chat_id' => $chat_id
     );
     array_push($this->pool, $tmp);
+    //print_r($this->pool);
   }
 
   public function dropUser($chat_id){
@@ -28,7 +29,8 @@ class UserIndetify extends BasicToken {
 }
 
 public function checkInput(array $tmp){
-  if (!isset($tmp['id']) || !isset($tmp['token']) || !isset($tmp['to']))
+  if (!isset($tmp['id']) || !isset($tmp['token']) || !isset($tmp['to'])
+        || !isset($tmp['status']))
     return false;
   if (!$this->check($tmp['token'], $tmp['id']))
     return false;

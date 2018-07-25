@@ -13,11 +13,11 @@ $password = '459512144';
   //      `email` VARCHAR(20), `password` VARCHAR(50), `date` DATE)");
   // $conn->exec("CREATE TABLE `fotos` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `id_user` INT,
   //               `all_foto` TEXT, `avatar` TEXT)");
-  // $conn->exec("CREATE TABLE `notifications` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `id_user` INT,
-  //       `text` TEXT, `new` int(1), `type` ENUM('like', 'like_back', 'dislike', 'new_mess', 'checked'),
-  //        `from` INT,`date` DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    $conn->exec("CREATE TABLE `chats` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `text` TEXT,
-    `user1` INT, `user2` INT)");
+  $conn->exec("CREATE TABLE `notifications` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `id_user` INT,
+      `text` TEXT, `new` int(1), `type` ENUM('like', 'like_back', 'dislike', 'new_msg', 'checked'),
+      `from` INT,`date` DATETIME DEFAULT CURRENT_TIMESTAMP)");
+   $conn->exec("CREATE TABLE `chats` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `text` TEXT,
+   `user1` INT, `user2` INT)");
   echo "Connection sucssec\n";
 } catch (PDOException $e) {
   echo 'Conection is fail ' . $e->getMessage();
