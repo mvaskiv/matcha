@@ -19,9 +19,7 @@ class UsersController extends BasicToken {
   public function insert($request, $response){
     $this->parsedBody = $request->getParsedBody();
     $this->init();
-    $stmtq = $this->conn->prepare("SELECT * FROM user");
-    $stmtq->execute();
-    $row_q = $stmtq->rowCount();
+    
     if (!isset($this->parsedBody['sort']) || !isset($this->parsedBody['start']) || !isset($this->parsedBody['number'])){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'no sort or start or number';
@@ -42,11 +40,6 @@ class UsersController extends BasicToken {
       $this->rt['error'] = 'no gender or start_age or end_age';
       return json_encode($this->rt);
     }
-    if ($this->parsedBody['number'] > $row_q) {
-      $this->rt['status'] = 'dbEnd';
-      $this->rt['error'] = 'database end reached';
-      return json_encode($this->rt);
-    }
     $this->exec();
     return json_encode($this->rt);
   }
@@ -56,6 +49,9 @@ class UsersController extends BasicToken {
     $usr = array();
     $start = intval($this->parsedBody['start']);
     $number = intval($this->parsedBody['number']);
+    $stmtq = $this->conn->prepare("SELECT * FROM user");
+    $stmtq->execute();
+    $row_q = $stmtq->rowCount();
     if ($this->parsedBody['sort'] == 'unsort')
       $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto, fotos.avatar FROM user LEFT JOIN fotos ON fotos.id_user=user.id LIMIT $start, $number");
     else if ($this->parsedBody['sort'] == 'age'){
@@ -83,7 +79,7 @@ class UsersController extends BasicToken {
           WHERE TIMESTAMPDIFF(YEAR, `date`, CURDATE()) > $start_age and TIMESTAMPDIFF(YEAR, `date`, CURDATE()) < $end_age
           and `gender` = '$gender'  LIMIT $start, $number");
         }
-      else{
+      else {
         $this->rt['status'] = 'ko';
         $this->rt['error'] = 'sort error';
         return ;
@@ -102,8 +98,11 @@ class UsersController extends BasicToken {
         array_push($usr, $row);
       }
     }
-  $this->rt['data'] = $usr;
-  $this->rt['status'] = 'ok';
+    $this->rt['data'] = $usr;
+    $this->rt['status'] = 'ok';
+    if (($this->parsedBody['number'] > $row_q) || ($this->parsedBody['number'] > count($usr))) {
+        $this->rt['status'] = 'dbEnd';
+    }
   return true;
 }
 }

@@ -30,14 +30,16 @@ class Chat implements MessageComponentInterface {
         $rt = array();
         $token = "";
         $numRecv = count($this->clients) - 1;
-        echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
-            , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
+        // echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
+        //     , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
-        $tmp = json_decode($json, true);
-        if (!($token =$this->user->checkInput($tmp))){
+        $tmp = json_decode($msg, true);
+        // var_dump($tmp);
+        // return ;
+        if (!($token = $this->user->checkInput($tmp))){
           $this->rt['status'] = 'ko';
           $this->rt['error'] = 'error';
-          $from->send(json_encode($this->rt));
+        //   $from->send(json_encode($this->rt));
           return ;
         }else {
           if ($this->user->receiver($tmp['to'])){
@@ -46,16 +48,17 @@ class Chat implements MessageComponentInterface {
           else{
             $this->rt['status'] = 'ko';
             $this->rt['error'] = 'receiver ofline';
-            $from->send(json_encode($this->rt));
+            // $from->send(json_encode($this->rt));
           }
           $this->rt['token'] = $token;
-          $from->send(json_encode($this->rt));
+        //   $from->send(json_encode($this->rt));
         }
-
-
+        
         foreach ($this->clients as $client) {
-           if ($this->user->receiver($tmp['to']) === $client) {
-             $client->send(json_encode($tmp['msg']));
+            // print_r($client);
+            // echo $this->user->receiver($tmp['to']) . '\n';
+            if ($this->user->receiver($tmp['to']) === $client->resourceId) {
+             $client->send($tmp['msg']);
            }
          }
     }

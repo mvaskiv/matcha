@@ -13,6 +13,7 @@ class UserIndetify extends BasicToken {
       'chat_id' => $chat_id
     );
     array_push($this->pool, $tmp);
+    print_r($this->pool);
   }
 
   public function dropUser($chat_id){
