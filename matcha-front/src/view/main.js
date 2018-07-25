@@ -41,7 +41,10 @@ class BrowseUsers extends Component {
             dbEnd: false,
             uid: '',
             users: '',
-            sort: '0',
+            sort: 'age',
+            gender: false,
+            start_age: 9,
+            end_age: 99,
             start: '0',
             number: 21
         }
@@ -55,6 +58,11 @@ class BrowseUsers extends Component {
             if (responseJson) {
                 var a = responseJson.data;
                 this.setState({users: a});
+                if (responseJson.status === 'dbEnd') {
+                    this.setState({dbEnd: true});
+                    this.ulist.removeEventListener('scroll', this._scrollListener);
+                    return ;
+                }
             }
         });
     }
@@ -79,13 +87,13 @@ class BrowseUsers extends Component {
         PostData('users', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
+                var a = responseJson.data;
+                this.setState({users: a});
                 if (responseJson.status === 'dbEnd') {
                     this.setState({dbEnd: true});
                     this.ulist.removeEventListener('scroll', this._scrollListener);
                     return ;
                 }
-                var a = responseJson.data;
-                this.setState({users: a});
             }
         });
     }
@@ -104,8 +112,8 @@ class BrowseUsers extends Component {
             return (
                 <div className='showAllUsers' ref={ulist => {this.ulist = ulist;}}>
                     { UserMap }
-                    <img className='preloader' src="http://www.wellnessexpome.com/wp-content/uploads/2018/06/pre-loader.gif"
-                    style={{display: this.state.dbEnd ? 'none' : 'block'}}/>
+                    <div className='preload-cnt'><img className='preloader' src="http://www.wellnessexpome.com/wp-content/uploads/2018/06/pre-loader.gif"
+                    style={{display: this.state.dbEnd ? 'none' : 'block'}}/></div>
                 </div>
             );
         }
@@ -139,7 +147,7 @@ const MenuSelf = (props) => (
         <nav className='full'>
         <a href='#home' className={(props.item === 'home' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("home")}><i className="fas fa-home"></i></a>
         <a className={(props.item === 'notifications' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("notifications")}><i className="far fa-bell"></i></a>
-        <a className={(props.item === 'search' ? 'menulink-sel' : 'menulink')}><i className="fas fa-search"></i></a>
+        <a className={(props.item === 'search' ? 'menulink-sel' : 'menulink')} onClick={() => Main._callSearch(1)}><i className="fas fa-search"></i></a>
         <a className={(props.item === 'profile' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("profile")}><i className="fas fa-user-astronaut"></i></a>
         <a className={(props.item === 'settings' ? 'menulink-sel' : 'menulink')} onClick={() => Main.callMenuItem("settings")}><i className="fas fa-sliders-h"></i></a>
         </nav>
@@ -163,6 +171,7 @@ class Main extends Component {
             hideMenuBar: false,
             showMenu: false,
             showMessages: false,
+            showSearch: false,
             display: 'home',
             previous: ''
         };
@@ -172,6 +181,7 @@ class Main extends Component {
         Main.callMenuItem = Main.callMenuItem.bind(this);
         Main.showProfile = Main.showProfile.bind(this);
         Main.hideMenuBar = Main.hideMenuBar.bind(this);
+        Main._callSearch = Main._callSearch.bind(this);
     }
 
     static hideMenuBar(a) {
@@ -190,6 +200,15 @@ class Main extends Component {
         if (a === 1) {this.setState({showMessages: true});}
         else {this.setState({showMessages: false});}
     }
+
+    static _callSearch(a) {
+        if (a === 1 && !this.state.showSearch) {
+            this.setState({showSearch: true});
+        } else {
+            this.setState({showSearch: false});
+        }
+    }
+
     static callMenuItem(a) {
         if (a === 'settings') {
             this.setState({showMenu: true});    
@@ -224,6 +243,9 @@ class Main extends Component {
                     </div>
                     <div className='menus-panel' style={{bottom: this.state.showMenu ? 100 + '%' : 0 + 'px'}}>
                         <MenuBar display={this.state.display} />
+                    </div>
+                    <div className='search-panel' style={{bottom: this.state.showSearch ? 0 + 'em' : -30 + 'em'}}>
+                        {/* <SearchPanel /> */}
                     </div>
                 </div>
                 <div className='noti-panel-cnt' style={{transform: this.state.showMessages ? 'translateX(-100%)' : 'translateX(0%)'}}>
@@ -493,33 +515,45 @@ class UserProfile extends Main {
             var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";        
             return (
             <div className='inner-cnt'>
-                <div className='profile-img'>
-                    <img className='profile-img' src={ src } alt=''/>
-                </div>
-                <div className='basic-u-info'>
-                    <h3> { username }, { userage } </h3>
-                    <div className='btn-group'>
-                        <button className='btn btn-default'>Message</button>
-                        <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                <div className='basic-u-info-cnt'>
+                    <div className='profile-img'>
+                        <img className='profile-img' src={ src ? src : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
+                    </div>
+                    <div className='basic-u-info'>
+                        <h3> { username }, { userage } </h3>
+                        <div className='btn-group'>
+                            <button className='btn btn-default'>Message</button>
+                            <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                        </div>
                     </div>
                 </div>
-                <div className='ext-u-info'>
-                    <div className='fll half'>
-                        <label>Gender</label>
-                        <span> { usergender } </span>
-                        <label>Born on</label>
-                        <span> { userdob } </span>
-                    </div>
-                    <div className='fll half'>
-                        <label>Seeking</label>
-                        <span> { userpref } </span>
-                        <label>Interested in</label>
-                        <span> { usertag } </span>
-                    </div> 
-                    <label>Bio</label>
-                    <span> { userbio } </span>
-                    <div className='ext-u-photos'>
-                        <label>My Photos</label>
+                
+                <div className='ext-u-info' style={{ marginTop: this.state.avaUploadBox ? 8.8 + 'em' : 5.4 + 'em' }} >
+                    
+                    <div className='ext-u-info2'>
+                        <div className='full u-int'>
+                            <div className='fll half'>
+                                <label>Gender</label>
+                                <span> { usergender } </span>
+                                <label>Born on</label>
+                                <span> { userdob } </span>
+                            </div>
+                            <div className='fll half'>
+                                <label>Seeking</label>
+                                <span> { userpref } </span>
+                                <label>Interested in</label>
+                                <span> { usertag } </span>
+                            </div> 
+                        </div>
+                        <div className='full u-bio'>
+                            <label>Bio</label>
+                            <span> { userbio } </span>
+                        </div>
+                        
+                        <div className='ext-u-photos'>
+                            <label>Pictures</label>
+                            {/* { userphotos } */}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -540,7 +574,8 @@ class Profile extends Main {
             imgUpload: false,
             me: '',
             id: localStorage.getItem('uid'),
-            token: localStorage.getItem('udata')
+            token: localStorage.getItem('udata'),
+            displayPicture: false
         }
         this._imgBase64 = this._imgBase64.bind(this);
         this._onFileUpload = this._onFileUpload.bind(this);
@@ -580,16 +615,20 @@ class Profile extends Main {
         var imgState = { photo: a, id: this.state.id, token: this.state.token };
         await this.setState({imgUpload: imgState});
         console.log(a);
-        PostData('myprofile/avatar', this.state.imgUpload).then((result) => {
-            let responseJson = result;
-            if (responseJson) {
-                if (responseJson.status === 'ok') {
-                    return true;
-                } else {
-                    return false;
+        if (window.confirm("Would you like to use this photograph as your profile picture?")) {
+            PostData('myprofile/avatar', this.state.imgUpload).then((result) => {
+                let responseJson = result;
+                if (responseJson) {
+                    if (responseJson.status === 'ok') {
+                        this.setState({update: true});
+                        this.setState({imgUpload: false});
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     async _onFileUpload() {
@@ -597,16 +636,24 @@ class Profile extends Main {
             let responseJson = result;
             if (responseJson) {
                 if (responseJson.status === 'ok') {
-                    if (!this._setAvatar(responseJson.index)) {
-                        alert('fuck');
-                    }
+                    this._setAvatar(responseJson.index);
                     this.setState({update: true});
+                    this.setState({avaUploadBox: false});
+                    this.setState({imgUpload: false});
                     alert("Your image has been successfully uploaded!");
                 } else {
                     alert("Ooops... Something's gone wrong. Please try again.");
                 }
             }
         });
+    }
+
+    async _showPicture(i) {
+        if (i === -42) {
+            await this.setState({displayPicture: false});
+        } else {
+            await this.setState({displayPicture: i});
+        }
     }
 
     _userAge(d) {
@@ -620,7 +667,8 @@ class Profile extends Main {
         if (a === 1 && !this.state.avaUploadBox) {
             this.setState({avaUploadBox: true});
         } else {
-            this.setState({avaUploadBox: false});            
+            this.setState({avaUploadBox: false});
+            this.setState({imgUpload: false});
         }
     }
 
@@ -637,6 +685,7 @@ class Profile extends Main {
                     }
                 }
             });
+            this.setState({displayPicture: false});
             this.setState({update: true});
         }
     }
@@ -656,21 +705,51 @@ class Profile extends Main {
             var userava = this.state.me['avatar'];
             var upics = JSON.parse(this.state.me['all_foto']);
             const userphotos = upics.map((photo, i) => {
-                return <div className='photo-thumb-cnt'><img className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} /><p onClick={() => this._deletePic(i)}>delete</p></div>
+                return (
+                <div className='photo-thumb-cnt'>
+                    {/* <i onClick={() => this._deletePic(i)} className="far fa-times-circle flr mar5 del-pic"></i> */}
+                    <img onClick={() => this._showPicture(i)} className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} />
+                </div>
+                );
             })
+            const pictureDisplay = (
+                <div>
+                    <div className='photo-v-head'>
+                        <h2 className="posa fll">&nbsp;Preview &amp; Edit </h2>
+                        <a href="#" style={{zIndex: 12}}><i className="far fa-times-circle flr mar5 close-photo-v-lg" onClick={() => this._showPicture(-42)}></i></a>
+                        {/* <p className="pic-v-lg-del">delete</p>
+                        <p className="pic-v-lg-seta">set as profile pic</p>               */}
+                        <div className="btn-group pic-control">
+                            <button onClick={() => this._setAvatar(upics[this.state.displayPicture])} className='btn btn-default third'><i className="fas fa-user-astronaut"></i></button>
+                            <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                            <button onClick={() => this._deletePic(this.state.displayPicture)} className='btn btn-default third'><i className="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <img className='picture-v-lg' src={ '/Matcha/uploads/' + upics[this.state.displayPicture] } alt='' />
+                </div>
+            );
             return (
             <div className='inner-cnt'>
+                <div className='picture-view-lg' style={{display: this.state.displayPicture ? 'block' : 'none'}} >
+                    {pictureDisplay}
+                </div>
                 <div className='basic-u-info-cnt'>
                     <div className='profile-img'>
-                        <img onClick={() => this._avaUploadBox(1)} className='profile-img' src={ userava ? 'Matcha/uploads/' + userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
+                        <i onClick={() => this._avaUploadBox(1)} class="fas fa-plus-circle ava-plus-icon"></i>
+                        <img className='profile-img' src={ userava ? 'Matcha/uploads/' + userava : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
                     </div>
                     <div className='basic-u-info'>
                         <h3> { username }, { userage } </h3>
                         <button className='btn btn-default'>Edit Your Profile</button>
                     </div>
                 </div>
-                
-                <div className='ext-u-info' style={{ marginTop: this.state.avaUploadBox ? 8.8 + 'em' : 5.4 + 'em' }} >
+                <div className='ext-u-info' style={
+                    { marginTop: this.state.avaUploadBox ? 
+                        this.state.imgUpload ? 128 + 'vw' : 8.8 + 'em' :
+                        this.state.imgUpload ? 9 + 'em' : 5.4 + 'em'
+                    }
+                    } >
+                    <img className='picture-v-lg-prev' src={this.state.imgUpload ? this.state.imgUpload.img : null} />
                     <div className='full ava-upl rel'>
                         <div className='btn-group w80 fll'>
                             <button className='btn btn-default half img-upl'><FileBase64 onDone={ this._onFileChange.bind(this) } /></button>
