@@ -14,7 +14,7 @@ $password = '459512144';
   // $conn->exec("CREATE TABLE `fotos` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `id_user` INT,
   //               `all_foto` TEXT, `avatar` TEXT)");
   $conn->exec("CREATE TABLE `notifications` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `id_user` INT,
-      `text` TEXT, `new` int(1), `type` ENUM('like', 'like_back', 'dislike', 'new_mess', 'checked'),
+      `text` TEXT, `new` int(1), `type` ENUM('like', 'like_back', 'dislike', 'new_msg', 'checked'),
       `from` INT,`date` DATETIME DEFAULT CURRENT_TIMESTAMP)");
    $conn->exec("CREATE TABLE `chats` (`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, `text` TEXT,
    `user1` INT, `user2` INT)");

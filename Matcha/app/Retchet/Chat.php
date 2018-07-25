@@ -33,10 +33,17 @@ class Chat implements MessageComponentInterface {
         // echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
         //     , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
+<<<<<<< HEAD
         $tmp = json_decode($msg, true);
         // var_dump($tmp);
         // return ;
         if (!($token = $this->user->checkInput($tmp))){
+=======
+        print_r($from->resourceId);
+        return ;
+        $tmp = json_decode($json, true);
+        if (!($token =$this->user->checkInput($tmp))){
+>>>>>>> 31dfb68c3231c602c30c947b0df6207c6021744c
           $this->rt['status'] = 'ko';
           $this->rt['error'] = 'error';
         //   $from->send(json_encode($this->rt));
@@ -55,9 +62,13 @@ class Chat implements MessageComponentInterface {
         }
         
         foreach ($this->clients as $client) {
+<<<<<<< HEAD
             // print_r($client);
             // echo $this->user->receiver($tmp['to']) . '\n';
             if ($this->user->receiver($tmp['to']) === $client->resourceId) {
+=======
+           if ($this->user->receiver($tmp['to']) === $client->resourceId) {
+>>>>>>> 31dfb68c3231c602c30c947b0df6207c6021744c
              $client->send($tmp['msg']);
            }
          }
