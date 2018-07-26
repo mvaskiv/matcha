@@ -73,6 +73,7 @@ class Chat implements MessageComponentInterface {
               if ($el['chat_id'] === $client->resourceId) {
                 $client->send($tmp['msg']);
               }
+              break ;
             }
           }
        }

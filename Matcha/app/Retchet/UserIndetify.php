@@ -21,6 +21,8 @@ class UserIndetify extends BasicToken {
       'chat_id' => $chat_id
     );
     array_push($this->pool, $tmp);
+    $sql = include "sqlconf.php";
+    print_r($sql);
   }
 
   public function dropUser($chat_id){
