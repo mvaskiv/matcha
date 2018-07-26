@@ -29,12 +29,14 @@ class Chat implements MessageComponentInterface {
         $br = false;
         $rt = array();
         $token = "";
-        $numRecv = count($this->clients) - 1;
-        echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
-            , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
-        print_r($from->resourceId);
-        return ;
+        $tmp = json_decode($msg, true);
+        if (!$tmp || !($token = $this->user->checkInput($tmp))){
+          $this->rt['status'] = 'ko';
+          $this->rt['error'] = 'error';
+          $from->send(json_encode($this->rt));
+          return ;
+        }
         $tmp = json_decode($json, true);
         if (!($token =$this->user->checkInput($tmp))){
           $this->rt['status'] = 'ko';
@@ -51,15 +53,29 @@ class Chat implements MessageComponentInterface {
             $from->send(json_encode($this->rt));
           }
           $this->rt['token'] = $token;
-          $from->send(json_encode($this->rt));
+           $from->send(json_encode($this->rt));
         }
 
+        //write message to database
+        if ($this->$tmp['status'] == 'msg'){
+            if (!$this->user->write_to_db($this->$tmp['to'], $from->resourceId, $this->tmp['msg'])){
+              $this->rt['status'] = 'ko';
+              $this->rt['error'] = 'chat is imposible';
+              $from->send(json_encode($this->rt));
+              return ;
+            }
+        }
 
-        foreach ($this->clients as $client) {
-           if ($this->user->receiver($tmp['to']) === $client->resourceId) {
-             $client->send($tmp['msg']);
-           }
-         }
+        //send to user
+        foreach($this->user->pool as $el){
+          if ($el['id'] == $tmp['to']){
+            foreach ($this->clients as $client) {
+              if ($el['chat_id'] === $client->resourceId) {
+                $client->send($tmp['msg']);
+              }
+            }
+          }
+       }
     }
 
     public function onClose(ConnectionInterface $conn) {
