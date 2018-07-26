@@ -2,9 +2,11 @@
 namespace App\Retchet;
 
 use App\Controllers\BasicToken;
+use App\Controllers;
 
 class UserIndetify extends BasicToken {
   public $pool = array();
+  private $dsn, $user, $password;
 
 
   public function addUser($id, $chat_id){
@@ -13,7 +15,8 @@ class UserIndetify extends BasicToken {
       'chat_id' => $chat_id
     );
     array_push($this->pool, $tmp);
-    //print_r($this->pool);
+    $sql = include "sqlconf.php";
+    print_r($sql);
   }
 
   public function dropUser($chat_id){
@@ -49,4 +52,13 @@ public function receiver($to){
   return false;
 }
 
+public function find_chat($user1, $user2){
+  //TODO make request to db 'chat'
+  return true;
+}
+
+public function write_to_db($to, $from, $msg){
+  //TODO write to chat table in db
+  return true;
+}
 }
