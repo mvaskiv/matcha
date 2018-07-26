@@ -84,16 +84,17 @@ public function possible_chat($user1, $user2){
 public function write_to_db($to, $from, $msg){
   $messange = json_decode($msg, true);
   $tmp = $this->possible_chat($to, $from);
-  if ($tmp['status'] == 'ko')
+  if ($tmp['status'] === 'ko')
     return false;
   if ($tmp['chat'] == 0){
     $stmt = $this->conn->prepare("INSERT INTO `chats` (`user1`, `user2`) VALUES({$to}, {$from})");
     $stmt->execute();
-    $Lrow = $stmt->fetch();
+    $row = $stmt->fetch();
     $stmt = $this->conn->prepare("INSERT INTO `messages` (`chat_id`, `sender`, `recipient`, `msg`) VALUES(?, ?, ?, ?)");
     $stmt->execute([$row['id'], $from, $to, $messange['message']]);
   }
   $stmt = $this->conn->prepare("INSERT INTO `messages` (`chat_id`, `sender`, `recipient`, `msg`) VALUES(?, ?, ?, ?)");
   $stmt->execute([$row['id'], $from, $to, $messange['message']]);
+  return true;
 }
 }
