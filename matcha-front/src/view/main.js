@@ -43,7 +43,7 @@ const UserThumbList = (props) => {
     var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";
 
     return (
-        <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(userid)}>
+        <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(-42, userid, userava, username)}>
             <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
             <p className='u-thumb-list-name'> { username } { surname } </p>
         </div>
@@ -355,17 +355,21 @@ class Notifications extends Main {
 }
 
 const MessagePreview = (props) => {
-    var username = props.data[0];
-    var chatid = props.data[1];
-    var previewText = props.data[2];
+    var username = props.data.data.f_name;
+    var chatid = props.data.id;
+    var ava = props.data.data.avatar;
+    var myid = localStorage.getItem('uid');
+    var mateid = props.data.user1 === myid ? props.data.user2 : props.data.user1;
+
+    // var previewText = props.data[2];
     return (
-        <li key={this} onClick={() => Messages.setChatid(chatid)}>
+        <li key={this} onClick={() => Messages.setChatid(chatid, mateid, ava, username)}>
             <div className="message-header">
                 <div className="usr-thumb-sm">
-                    <img className='usr-thumb-pic-sm' alt='' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' />
+                    <img className='usr-thumb-pic-sm' alt='' src={props.data.data.avatar ? '/Matcha/uploads/' + props.data.data.avatar : '/Matcha/uploads/avatar-placeholder.png'}/>
                 </div>
                 <div className="message-prev" onClick={() => Messages.setChatid( chatid )}>
-                    <span className='message-prev'><b>{ username }</b><br />{ previewText }</span>
+                    <span className='message-prev'><b>{ username }</b><br /> Click to open </span>
                 </div>
             </div>
         </li>
@@ -380,6 +384,7 @@ class Messages extends Main {
             id: localStorage.getItem('uid'),
             chats: false,
             chatid: '',
+            mate: '',
             new: false
         }
         Messages.resetChat = Messages.resetChat.bind(this);
@@ -407,8 +412,17 @@ class Messages extends Main {
         // this.setState({new: false});
     }
 
-    static setChatid(a) {
-        this.setState({chatid: a});
+    static setChatid(chat, user, ava, username) {
+        if (chat === -42) {
+            this.state.chats.forEach(c => {
+                if (c.user1 === user || c.user2 === user) {
+                    this.setState({chatid: c.id});
+                    return ;
+                }
+            });
+        }
+        this.setState({chatid: chat});
+        this.setState({mate: {f_name: username, avatar: ava, id: user}});
         // this.setState({new: false});
     }
 
@@ -419,10 +433,18 @@ class Messages extends Main {
 
     render () {
         var messages = [['Mike', '103', 'Hey, how are you?'], ['John', '2', 'Hello sweetie'], ['Vasya', '3', 'You stole my heart...']];        
+        const chatmap = this.state.chats ? this.state.chats.map((chat, i) => {
+            return (
+                <MessagePreview
+                    key={i}
+                    data={chat} />
+            );
+        }) : null;
         if (this.state.chatid) {
             return (
                 <Chat
-                    id={this.state.chatid} />
+                    id={this.state.chatid}
+                    mate={this.state.mate} />
             );
         } else if (this.state.new) {
             return <NewMessage />
@@ -435,13 +457,7 @@ class Messages extends Main {
                         <h4 className='menu-head'>Messages</h4>
                     </div>
                     <ul>
-                        {messages.map(function(user, i) {
-                            return (
-                                <MessagePreview
-                                    key={i}
-                                    data={user} />
-                            );
-                        })}
+                        { chatmap }
                     </ul>
                 </div>
             );
@@ -586,6 +602,7 @@ class Chat extends Messages {
         this.state = {
             token: localStorage.getItem('udata'),
             id: localStorage.getItem('uid'),
+            chatId: false,
             viewId: false,
             focus: false,
             updated: false,
@@ -609,7 +626,7 @@ class Chat extends Messages {
         var str = JSON.parse(e);
         // console.log(str.message);
         if (str.message) {
-            await this.state.messages.push([str.message, str.sender]);
+            await this.state.messages.push({msg: str.message, sender: str.sender});
         } else if (str.message && str.status !== "ok") {
             alert ("Ooops, something's gone wrong. Please, try again.");
         }
@@ -618,15 +635,16 @@ class Chat extends Messages {
 
     changeView() {
         this.setState({viewId: this.props.id});
+        this.setState({data: this.props.mate});
     }
 
     async _getInfo() {
         await this.changeView();
-        PostData('myprofile', this.state).then((result) => {
+        PostData('msghistory', this.state).then((result) => {
             let responseJson = result;
-            if (responseJson) {
-                var a = responseJson[0];
-                this.setState({data: a});
+            if (responseJson.data) {
+                var a = responseJson.data;
+                this.setState({messages: a});
             }
         });
     }
@@ -646,7 +664,7 @@ class Chat extends Messages {
         if (this.props.id && (this.props.id !== this.state.viewId)) {
             this._getInfo();
         }
-        if (this.msglst) {
+        if (this.msglst.lastChild) {
             this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
         }
         // if (this.state.updated) {
@@ -671,14 +689,23 @@ class Chat extends Messages {
 
     async _sendMesssage() {
         if (this.state.newMessage) {
-            var message = {message: this.state.newMessage, sender: localStorage.getItem('uid')};
-            var messageState = {status: 'msg', to: this.state.viewId, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
+            var message = {message: this.state.newMessage, sender: localStorage.getItem('uid'), s_name: localStorage.getItem('uname')};
+            var messageState = {status: 'msg', to: this.state.data.id, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
             if (this._msgToDb(messageState)) {
                 this.conn.send(JSON.stringify(messageState));
-                if (this.state.id !== this.state.viewId) {this.state.messages.push([this.state.newMessage, localStorage.getItem('uid')]);}
+                // this._getInfo();
+                this.state.messages.push({msg: this.state.newMessage, sender: this.state.id});
                 this.setState({newMessage: ''});
             }
         }
+    }
+
+    _getMsgTime(t) {
+        if (t) {
+            var s = t.split(" ");
+            var x = s[1].split(":");
+            return x[0] + ":" + x[1];
+        }        
     }
 
     InputOnFocus(a) {
@@ -690,12 +717,12 @@ class Chat extends Messages {
 
     render () {
         var myid = localStorage.getItem('uid');
-
-        var display = this.state.messages.map((message) => {
+        var display =  this.props.id === -42 ? null : this.state.messages.map((message, i) => {
+            var timestamp = this._getMsgTime(message.date);
             return (
-                <li className='msg-cps'>
-                    <img className='chat-u-thumb' src={this.state.data.avatar ? '/Matcha/uploads/' + this.state.data.avatar : 'Matcha/uploads/avatar-placeholder.png'} style={{ display: message[1] === myid ? 'none' : 'block' }}/>
-                    <p className={(message[1] === myid ? 'sent-message btn' : 'received-message btn')}>{message[0]}<span className={(message[1] === myid ? 'msg-time-r' : 'msg-time-l')}>22:00</span></p>
+                <li className='msg-cps' key={i}>
+                    <img className='chat-u-thumb' src={this.state.data.avatar ? '/Matcha/uploads/' + this.state.data.avatar : 'Matcha/uploads/avatar-placeholder.png'} style={{ display: message.sender === myid ? 'none' : 'block' }}/>
+                    <p className={(message.sender === myid ? 'sent-message btn' : 'received-message btn')}>{message.msg}<span className={(message.sender === myid ? 'msg-time-r' : 'msg-time-l')}>{ timestamp }</span></p>
                 </li>
             );
         })
@@ -775,10 +802,18 @@ class UserProfile extends Main {
         return Math.abs(aT.getUTCFullYear() - 1970);
     }
 
-    _openChat(id) {
-        // Messages.setChatid(id);
-        // Main.showProfile(-42);
-        // Main.callMessages(0);
+    async _openChat(id, ava, name) {
+        await Messages.setChatid(-42, id, ava, name);
+        setTimeout(
+            function() {
+                Main.callMessages(1);
+            }
+            .bind(this),
+            500
+          );
+        // await Main.showProfile(-42);
+        // 
+        
     }
 
     render() {
@@ -798,12 +833,12 @@ class UserProfile extends Main {
             <div className='inner-cnt'>
                 <div className='basic-u-info-cnt'>
                     <div className='profile-img'>
-                        <img className='profile-img' src={ src ? src : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
+                        <img className='profile-img' src={ this.state.data.avatar ? 'Matcha/uploads/' + this.state.data.avatar : src } alt=''/>
                     </div>
                     <div className='basic-u-info'>
                         <h3> { username }, { userage } </h3>
                         <div className='btn-group'>
-                            <button onClick={() => this._openChat(userid)} className='btn btn-default'>Message</button>
+                            <button onClick={() => this._openChat(userid, this.state.data.avatar, username)} className='btn btn-default'>Message</button>
                             <button className='btn btn-default third'><i className="far fa-star"></i></button>
                         </div>
                     </div>
@@ -877,6 +912,7 @@ class Profile extends Main {
             if (responseJson) {
                 var a = responseJson[0];
                 this.setState({ me: a });
+                localStorage.setItem('uname', a.f_name);
             }
         });
         this.setState({update: false});        

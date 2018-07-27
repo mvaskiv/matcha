@@ -28,6 +28,25 @@
   overflow: hidden;
 }
 
+.noti-popup {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5em;
+  background-color: #fff;
+  box-shadow: 1px 1px 15px #444;
+  /* transition: 300ms; */
+  animation: popup 3s forwards;
+  z-index: 14;
+}
+
+@keyframes popup {
+  0% {top: -6em}
+  10% {top: 0em;}
+  90% {top: 0em;}
+  100% {top: -6em;}
+}
 
 
 .preloader-div {
@@ -362,7 +381,7 @@
   border-bottom: 1px;
   border-color: #ddd;
   border-style: solid;
-  z-index: 3;
+  z-index: 16;
 }
 
 .menu-nav-new i {
@@ -413,7 +432,7 @@
   height: 100%;
   background-color: rgb(255, 255, 255);
   overflow-x: scroll;
-  z-index: 2
+  z-index: 15;
 }
 
 .noti-panel-cnt {
@@ -567,6 +586,8 @@ img.usr-thumb-pic-sm {
   top: 0.5em;
   width: 4em;
   height: 4em;
+  border-radius: 100px;
+  border: 1px solid #333;
 }
 span.message-prev {
   width: 100%;

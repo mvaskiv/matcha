@@ -105,8 +105,15 @@ class App extends Component {
     super();
     this.state = {
       login: false,
+      notification: false
     };
     App._loginCall = App._loginCall.bind(this);
+    this._callNotif = this._callNotif.bind(this);
+    this.conn = new WebSocket('ws://localhost:8200?id=' + localStorage.getItem('uid'));
+    this.conn.onmessage = (e) => {
+        console.log(e.data);            
+        this._callNotif(e.data);
+    };
   }
 
   static _loginCall(a) {
@@ -117,6 +124,17 @@ class App extends Component {
       this.setState({login: false});
       browserHistory.push('/');
     }
+  }
+
+  async _callNotif(a) {
+    await this.setState({notification: JSON.parse(a)});
+    setTimeout(
+      function() {
+        this.setState({notification: false});
+      }
+      .bind(this),
+      4000
+    );
   }
 
   loggedIn() {
@@ -136,17 +154,22 @@ class App extends Component {
     //   );
     // } else {
       return (
-        <Router history={browserHistory}>
-          <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
-          {/* <Route exact path="/login" component={LoginRoute}/> */}
+        <div>
+          <div className='noti-popup' style={{display: this.state.notification ? 'block' : 'none'}}>
+            <h3> &nbsp;{ this.state.notification.s_name }: { this.state.notification.message } </h3>
+          </div>
+          <Router history={browserHistory}>
+            <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
+            {/* <Route exact path="/login" component={LoginRoute}/> */}
 
-          {/* <Route path="/login" component={Login}/> */}
-          {/* <Route path="/register" component={Register}/> */}
-          {/* <Route path="/users" component={allUsers}/>
-          <Route path="/user" component={allUsers}/>
-          <Route path="/:username" component={User}/> */}
-          {/* <Route component={Main} /> */}
-        </Router>
+            {/* <Route path="/login" component={Login}/> */}
+            {/* <Route path="/register" component={Register}/> */}
+            {/* <Route path="/users" component={allUsers}/>
+            <Route path="/user" component={allUsers}/>
+            <Route path="/:username" component={User}/> */}
+            {/* <Route component={Main} /> */}
+          </Router>
+        </div>
       );
     // }
   }
