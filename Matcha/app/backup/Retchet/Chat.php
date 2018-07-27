@@ -21,7 +21,7 @@ class Chat implements MessageComponentInterface {
         $this->clients->attach($conn);
         $querystring = (explode('=', $conn->httpRequest->getUri()->getQuery()))[1];
         $this->user->addUser($querystring ,$conn->resourceId);
-
+        echo count($this->clients);
         echo "New connection! ({$conn->resourceId}) id ({$querystring})\n";
     }
 
@@ -29,19 +29,23 @@ class Chat implements MessageComponentInterface {
         $br = false;
         $rt = array();
         $token = "";
+        //$numRecv = count($this->clients) - 1;
+        // echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
+        //     , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
         $tmp = json_decode($msg, true);
         if (!$tmp || !($token = $this->user->checkInput($tmp))){
+          //print_r($this->user->pool);
           $this->rt['status'] = 'ko';
           $this->rt['error'] = 'error';
-          $from->send(json_encode($this->rt));
+          // $from->send(json_encode($this->rt));
           return ;
         }
         $tmp = json_decode($msg, true);
         if (!($token =$this->user->checkInput($tmp))){
           $this->rt['status'] = 'ko';
           $this->rt['error'] = 'error';
-          $from->send(json_encode($this->rt));
+          // $from->send(json_encode($this->rt));
           return ;
         }else {
           if ($this->user->receiver($tmp['to'])){
@@ -50,22 +54,13 @@ class Chat implements MessageComponentInterface {
           else{
             $this->rt['status'] = 'ko';
             $this->rt['error'] = 'receiver ofline';
-            $from->send(json_encode($this->rt));
+            // $from->send(json_encode($this->rt));
           }
           $this->rt['token'] = $token;
-           $from->send(json_encode($this->rt));
+          //  $from->send(json_encode($this->rt));
         }
-        //write message to database
-        // if ($tmp['status'] == 'msg'){
-        //     if (!$this->user->write_to_db($tmp['to'], $from->resourceId, $tmp['msg'])){
-        //       $this->rt['status'] = 'ko';
-        //       $this->rt['error'] = 'chat is imposible';
-        //       $from->send(json_encode($this->rt));
-        //       return ;
-        //     }
-        // }
 
-        //send to user
+
         foreach($this->user->pool as $el){
           if ($el['id'] == $tmp['to']){
             foreach ($this->clients as $client) {

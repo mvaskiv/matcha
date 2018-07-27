@@ -376,12 +376,30 @@ class Messages extends Main {
     constructor() {
         super();
         this.state = {
+            token: localStorage.getItem('udata'),
+            id: localStorage.getItem('uid'),
+            chats: false,
             chatid: '',
             new: false
         }
         Messages.resetChat = Messages.resetChat.bind(this);
         Messages.setChatid = Messages.setChatid.bind(this);
         Messages.backToMessages = Messages.backToMessages.bind(this);
+    }
+
+    componentDidMount() {
+        PostData('getchats', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson.data;
+                this.setState({chats: a});
+                if (responseJson.status === 'dbEnd') {
+                    this.setState({dbEnd: true});
+                    // this.ulist.removeEventListener('scroll', this._scrollListener);
+                    return ;
+                }
+            }
+        });
     }
 
     static resetChat () {
@@ -500,7 +518,27 @@ class NewMessage extends Messages {
 
     render() {
         if (!this.state.loaded) {
-            return <div className='preloader-div'><img className='cool-preloader-img' src='https://media.giphy.com/media/26xBMTrIhFT1YYe7m/source.gif' alt='' /></div>            
+            return (
+                <div>
+                    <div className='menu-nav-new tac'>
+                        <div>
+                            <a href="#"><i onClick={() => Messages.backToMessages()} className="fas fa-arrow-left fll"></i></a>
+                            <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
+                            <h4 className='menu-head'>Messages</h4>
+                        </div>
+                        <div>
+                            <div className='form-element-group chat-search-input'>
+                                <input
+                                    type='text'
+                                    className='form-element search-in'
+                                    placeholder='Search' />
+                                <span onClick={() => this.testMessage()} className='form-element-extra search-snd-btn'><i className="fas fa-search"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='preloader-div'><img className='cool-preloader-img' src='https://media.giphy.com/media/26xBMTrIhFT1YYe7m/source.gif' alt='' /></div>
+                </div>
+            );
             // return <div className='preloader-div'><img className='cool-preloader-img' src='https://i.pinimg.com/originals/bb/9e/45/bb9e4523225243dacfd02ebc653b5b6d.gif' alt='' /></div>
         } else if (this.state.loaded) {
             if (this.state.users) {
@@ -555,7 +593,7 @@ class Chat extends Messages {
             newMessage: '',
             messages: [['Hey', '0']]
         }
-        this.testMessage = this.testMessage.bind(this);
+        this.testMessage = this._sendMesssage.bind(this);
         this.InputOnFocus = this.InputOnFocus.bind(this);
         this.onChange = this.onChange.bind(this);
         this._getInfo = this._getInfo.bind(this);
@@ -569,9 +607,12 @@ class Chat extends Messages {
 
     async _msgReceived(e) {
         var str = JSON.parse(e);
-        console.log(str.message);
-        
-        await this.state.messages.push([str.message, str.sender]);
+        // console.log(str.message);
+        if (str.message) {
+            await this.state.messages.push([str.message, str.sender]);
+        } else if (str.message && str.status !== "ok") {
+            alert ("Ooops, something's gone wrong. Please, try again.");
+        }
         this.setState({updated: true});
     }
 
@@ -617,13 +658,26 @@ class Chat extends Messages {
         this.setState({[e.target.name]:e.target.value});
     }
 
-    testMessage() {
+    async _msgToDb(msg) {
+        await PostData('send', msg).then((result) => {
+            let responseJson = result;
+            if (responseJson.status === 'ok') {
+                return true;
+            } else {
+                return false;
+            }
+        });
+    }
+
+    async _sendMesssage() {
         if (this.state.newMessage) {
             var message = {message: this.state.newMessage, sender: localStorage.getItem('uid')};
-            var messageState = JSON.stringify({status: 'msg', to: this.state.viewId, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)});
-            this.conn.send(messageState);
-            if (this.state.id !== this.state.viewId) {this.state.messages.push([this.state.newMessage, localStorage.getItem('uid')]);}
-            this.setState({newMessage: ''});
+            var messageState = {status: 'msg', to: this.state.viewId, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
+            if (this._msgToDb(messageState)) {
+                this.conn.send(JSON.stringify(messageState));
+                if (this.state.id !== this.state.viewId) {this.state.messages.push([this.state.newMessage, localStorage.getItem('uid')]);}
+                this.setState({newMessage: ''});
+            }
         }
     }
 
@@ -672,7 +726,7 @@ class Chat extends Messages {
                         onChange={this.onChange}
                         onFocus={() => this.InputOnFocus(1)}
                         onBlur={() => this.InputOnFocus(0)} />
-                    <span onClick={() => this.testMessage()} className='form-element-extra msg-snd-btn'><i className="fab fa-telegram-plane"></i></span>
+                    <span onClick={() => this._sendMesssage()} className='form-element-extra msg-snd-btn'><i className="fab fa-telegram-plane"></i></span>
                 </div>
             </div>
         );
@@ -839,8 +893,8 @@ class Profile extends Main {
 
     async _setAvatar(a) {
         var imgState = { photo: a, id: this.state.id, token: this.state.token };
-        await this.setState({imgUpload: imgState});
-        console.log(a);
+        await this.setState({imgUpload: false});
+        // console.log(a);
         if (window.confirm("Would you like to use this photograph as your profile picture?")) {
             PostData('myprofile/avatar', imgState).then((result) => {
                 let responseJson = result;
