@@ -650,7 +650,7 @@ class Chat extends Messages {
     }
 
     componentDidMount() {
-        // this.msglst.lastChild.scrollIntoView(!0);
+        if (this.msglst.lastChild) {this.msglst.lastChild.scrollIntoView(!0);}
         if (this.props.id && (this.props.id !== this.state.viewId)) {
             this._getInfo();
         }
@@ -689,7 +689,7 @@ class Chat extends Messages {
 
     async _sendMesssage() {
         if (this.state.newMessage) {
-            var message = {message: this.state.newMessage, sender: localStorage.getItem('uid'), s_name: localStorage.getItem('uname')};
+            var message = {message: this.state.newMessage, sender: localStorage.getItem('uid'), s_name: localStorage.getItem('uname'), s_ava: localStorage.getItem('uava'), chatid: this.state.viewId};
             var messageState = {status: 'msg', to: this.state.data.id, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
             if (this._msgToDb(messageState)) {
                 this.conn.send(JSON.stringify(messageState));
@@ -712,7 +712,9 @@ class Chat extends Messages {
         // // Main.hideMenuBar(a);
         if (a === 1) {this.setState({focus: true});}
         else {this.setState({focus: false});}
-        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        if (this.msglst.lastChild) {
+            this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        }
     }
 
     render () {
@@ -913,6 +915,7 @@ class Profile extends Main {
                 var a = responseJson[0];
                 this.setState({ me: a });
                 localStorage.setItem('uname', a.f_name);
+                localStorage.setItem('uava', a.avatar);
             }
         });
         this.setState({update: false});        

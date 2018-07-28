@@ -126,6 +126,20 @@ class App extends Component {
     }
   }
 
+//   async _openChat(id, ava, name) {
+//     await Messages.setChatid(-42, id, ava, name);
+//     setTimeout(
+//         function() {
+//             Main.callMessages(1);
+//         }
+//         .bind(this),
+//         500
+//       );
+//     // await Main.showProfile(-42);
+//     // 
+    
+// }
+
   async _callNotif(a) {
     await this.setState({notification: JSON.parse(a)});
     setTimeout(
@@ -156,7 +170,9 @@ class App extends Component {
       return (
         <div>
           <div className='noti-popup' style={{display: this.state.notification ? 'block' : 'none'}}>
-            <h3> &nbsp;{ this.state.notification.s_name }: { this.state.notification.message } </h3>
+            <img className='popup-u-thumb' src={'/Matcha/uploads/' + this.state.notification.s_ava} alt=''/>
+            <p>New Message</p><p><b>{ this.state.notification.s_name }</b>: { this.state.notification.message } </p>
+            <p className='popup-open'>open</p>
           </div>
           <Router history={browserHistory}>
             <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
