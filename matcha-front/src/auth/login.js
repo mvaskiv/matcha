@@ -24,10 +24,15 @@ class LoginForm extends Component {
                 if (responseJson.status === "ok" && responseJson.token) {
                     localStorage.setItem('udata', responseJson.token);
                     localStorage.setItem('uid', responseJson.id);
-                    this.setState({redirectToReferrer: true});
-                    browserHistory.push('/');
-                } else if (responseJson.status === "ko" && responseJson.error === "no user") {
+                    // this.setState({redirectToReferrer: true});
+                    
+                    setTimeout(function() {
+                        window.location = '/';
+                    }, 700);
+                } else if (responseJson.status === "ko" || responseJson.error === "no user") {
                     this.setState({wrongCred: true});
+                } else {
+                    alert ("Ooops, server-side error. PLease, try again a bit later.");
                 }
             });
         }

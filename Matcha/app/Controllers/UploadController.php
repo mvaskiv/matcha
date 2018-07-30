@@ -243,18 +243,18 @@ class UploadController extends BasicToken {
       $this->rt['error'] = 'no id or token';
       return json_encode($this->rt);
     }
-    if ($this->exec_messageHistory($this->parsedBody['viewId'])) {
+    if ($this->exec_messageHistory($this->parsedBody['viewId'], $this->parsedBody['number'])) {
       $this->rt['status'] = 'oke' . $this->parsedBody['viewId'];
     }
     $this->rt['token'] = $this->update($this->parsedBody['token']);
     return json_encode($this->rt);
   }
 
-  private function exec_messageHistory($chatid) {
+  private function exec_messageHistory($chatid, $number) {
     $this->init();
     $stmt = NULL;
     $msg = array();
-    $stmt = $this->conn->prepare("SELECT * FROM messages WHERE chat_id = '$chatid'");
+    $stmt = $this->conn->prepare("SELECT * FROM messages WHERE chat_id = '$chatid' ORDER BY date ASC LIMIT 0, $number ");
     $stmt->execute();
     $rows = $stmt->fetchAll();
     // if ($stmt->execute()) {

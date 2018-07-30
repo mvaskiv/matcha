@@ -84,11 +84,13 @@ class BrowseUsers extends Component {
     }
 
     componentDidUpdate() {
-        this.ulist.addEventListener('scroll', this._scrollListener);
+        if (this.ulist) {
+            this.ulist.addEventListener('scroll', this._scrollListener);
+        }
     }
 
     componentWillUnmount() {
-        window.removeEventListener('scroll', this.onScroll, false);
+        window.removeEventListener('scroll', this._onScroll, false);
     }
 
     _scrollListener() {
@@ -376,7 +378,7 @@ const MessagePreview = (props) => {
     );
 }
 
-class Messages extends Main {
+export class Messages extends Main {
     constructor() {
         super();
         this.state = {
@@ -390,6 +392,7 @@ class Messages extends Main {
         Messages.resetChat = Messages.resetChat.bind(this);
         Messages.setChatid = Messages.setChatid.bind(this);
         Messages.backToMessages = Messages.backToMessages.bind(this);
+        Messages.returnChatid = Messages.returnChatid.bind(this);
     }
 
     componentDidMount() {
@@ -405,6 +408,14 @@ class Messages extends Main {
                 }
             }
         });
+    }
+
+    static returnChatid() {
+        if (this.state && this.state.chatid) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     static resetChat () {
@@ -432,7 +443,7 @@ class Messages extends Main {
     }
 
     render () {
-        var messages = [['Mike', '103', 'Hey, how are you?'], ['John', '2', 'Hello sweetie'], ['Vasya', '3', 'You stole my heart...']];        
+        // var messages = [['Mike', '103', 'Hey, how are you?'], ['John', '2', 'Hello sweetie'], ['Vasya', '3', 'You stole my heart...']];        
         const chatmap = this.state.chats ? this.state.chats.map((chat, i) => {
             return (
                 <MessagePreview
@@ -607,9 +618,12 @@ class Chat extends Messages {
             focus: false,
             updated: false,
             data: false,
+            number: 150,
             newMessage: '',
             messages: [['Hey', '0']]
         }
+        this._onScroll = this._onScroll.bind(this);
+        this._scrollListener = this._scrollListener.bind(this);
         this.testMessage = this._sendMesssage.bind(this);
         this.InputOnFocus = this.InputOnFocus.bind(this);
         this.onChange = this.onChange.bind(this);
@@ -617,8 +631,10 @@ class Chat extends Messages {
         this.changeView = this.changeView.bind(this);
         this.conn = new WebSocket('ws://localhost:8200?id=' + localStorage.getItem('uid'));
         this.conn.onmessage = (e) => {
-            console.log(e.data);            
             this._msgReceived(e.data);
+            if (this.msglst.lastChild) {
+                this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+            }
         };
     }
 
@@ -657,9 +673,14 @@ class Chat extends Messages {
         this.conn.onopen = function(e) {
             console.log("Connection established!");
         };
-        
+        this.setState({interval: setInterval(this._getInfo, 1500)});
     }
 
+    // SOME SAVAGE SHIT RIGHT HERE [up] [down]
+
+    componentWillUnmount() {
+        clearInterval(this.state.interval);
+    }
     componentDidUpdate() {
         if (this.props.id && (this.props.id !== this.state.viewId)) {
             this._getInfo();
@@ -667,9 +688,28 @@ class Chat extends Messages {
         if (this.msglst.lastChild) {
             this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
         }
+        if (this.msglstc) {
+            this.msglstc.addEventListener('scroll', this._scrollListener);
+        }
         // if (this.state.updated) {
         //     this.setState({updated: false});
         // }
+    }
+
+    _scrollListener() {
+        console.log(this.msglstc.scrollTop);
+        console.log(this.msglstc.clientHeight);
+        console.log(this.msglstc.scrollHeight);
+        // if (this.msglstc.scrollTop <= 10) {
+        //     console.log('scroll');
+        //     this._onScroll();
+        // }
+    }
+
+    async _onScroll() {
+        var n = this.state.number + 15;
+        await this.setState({number: n});
+        this._getInfo();
     }
 
     onChange(e) {
@@ -680,6 +720,10 @@ class Chat extends Messages {
         await PostData('send', msg).then((result) => {
             let responseJson = result;
             if (responseJson.status === 'ok') {
+                if (responseJson.id !== this.state.viewId) {
+                    console.log(responseJson.id);
+                    Messages.setChatid(responseJson.id, this.props.mate.id, this.props.mate.avatar, this.props.mate.f_name);
+                }
                 return true;
             } else {
                 return false;
@@ -739,7 +783,7 @@ class Chat extends Messages {
                         <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
                         <h4 className='menu-head'> { username } </h4>
                     </div>
-                    <div className='chat-self'>
+                    <div className='chat-self' ref={msglstc => {this.msglstc = msglstc;}}>
                         <ul ref={msglst => {this.msglst = msglst;}}>
                             { display }
                         </ul>
@@ -914,8 +958,10 @@ class Profile extends Main {
             if (responseJson) {
                 var a = responseJson[0];
                 this.setState({ me: a });
-                localStorage.setItem('uname', a.f_name);
-                localStorage.setItem('uava', a.avatar);
+                if (a && a.f_name && a.avatar) {
+                    localStorage.setItem('uname', a.f_name);
+                    localStorage.setItem('uava', a.avatar);
+                }
             }
         });
         this.setState({update: false});        
