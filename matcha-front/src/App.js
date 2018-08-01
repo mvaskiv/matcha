@@ -12,6 +12,11 @@ import Main from './view/main';
 import { Redirect } from 'react-router';
 import { Messages } from './view/main';
 
+import { config } from "./service/firebaseConfig";
+import firebase from "firebase";
+import { initializePush } from './service/ini';
+firebase.initializeApp(config);
+
 const LoginHeader = ({ title }) => (
   <div className="welcome-signin posa full" id='header'>
     <a onClick={() => App._loginCall(1)}><p className='login-btn flr mar5'>Log in</p></a>
@@ -120,6 +125,7 @@ class App extends Component {
   }
 
   async componentWillMount() {
+    initializePush();
     // await PostData('myprofile', this.state).then((result) => {
     //   let responseJson = result;
     //   if (responseJson && localStorage.getItem('udata') && localStorage.getItem('uname')) {
@@ -204,6 +210,7 @@ class App extends Component {
             <p className='popup-open' onClick={() => this._openChat(this.state.notification.chatid, this.state.notification.sender, this.state.notification.s_ava, this.state.notification.s_name)}>open</p>
           </div>
           <Router history={browserHistory}>
+            {/* <Route exact path='/push'component={Push}/> */}
             <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
             {/* <Route exact path="/login" component={LoginRoute}/> */}
             {/* <Route path="/login" component={Login}/> */}

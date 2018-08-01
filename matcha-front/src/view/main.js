@@ -288,11 +288,7 @@ class SearchPanel extends Component {
     }
 
     _sliderChange(e) {
-        // if (e.target.name === 'age_u' && e.target.value > this.state.age_l) {
-            this.setState({[e.target.name]:e.target.value});            
-        // } else if (e.target.name === 'age_l' && e.target.value > this.state.age_l) {
-        //     this.setState({[e.target.name]:e.target.value});                        
-        // } 
+        this.setState({[e.target.name]:e.target.value});    
     }
 
     render () {
@@ -618,6 +614,8 @@ class Chat extends Messages {
             focus: false,
             updated: false,
             data: false,
+            fbtoken: '',
+            start: 0,
             number: 150,
             newMessage: '',
             messages: [['Hey', '0']]
@@ -629,6 +627,8 @@ class Chat extends Messages {
         this.onChange = this.onChange.bind(this);
         this._getInfo = this._getInfo.bind(this);
         this.changeView = this.changeView.bind(this);
+        this._getFbToken = this._getFbToken.bind(this);
+        this._sendFireNoti = this._sendFireNoti.bind(this);
         this.conn = new WebSocket('ws://localhost:8200?id=' + localStorage.getItem('uid'));
         this.conn.onmessage = (e) => {
             this._msgReceived(e.data);
@@ -663,6 +663,20 @@ class Chat extends Messages {
                 this.setState({messages: a});
             }
         });
+        this._getFbToken();
+    }
+
+    _getFbToken() {
+        if (this.state.data) {
+            var state = {id: this.state.data.id, action: 'get'};
+            PostData('fbtoken', state).then((result) => {
+                let responseJson = result;
+                if (responseJson.data) {
+                    console.log('mates token: ' + responseJson.data);
+                    this.setState({fbtoken: responseJson.data});
+                }
+            });
+        }
     }
 
     componentDidMount() {
@@ -731,12 +745,39 @@ class Chat extends Messages {
         });
     }
 
+    _sendFireNoti(data) {
+        let URL = 'https://fcm.googleapis.com/fcm/send';
+        if (this.state.fbtoken) {
+            return new Promise((resolve, reject) => {
+                fetch(URL, {
+                    method: 'POST',
+                    // mode: 'no-cors',
+                    headers: {
+                        Authorization: 'key=AAAACPgZpn8:APA91bETKxCnDptt0ej0AHyX9fARyBzRf5jlkaOJvWkE9xfisPJ0906GLmfLszuDXaLTF-0Go9fM30YtLRW7MJ-X7H5x6L2wGjM15AHlZLTn-iQvKy0WI7_h1dqSxC-OiqpgfqzgCoCCucCjwdozH3xFOr49dDaJ-g',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({token: localStorage.getItem('firebaseToken'), to: this.state.fbtoken, priority: 'high', notification: {body: data}})
+                })
+                .then((response) => response.json())
+                .then((res) => {
+                    console.log(res);
+                    resolve(res);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+            });
+        }
+    }
+    
+
     async _sendMesssage() {
         if (this.state.newMessage) {
             var message = {message: this.state.newMessage, sender: localStorage.getItem('uid'), s_name: localStorage.getItem('uname'), s_ava: localStorage.getItem('uava'), chatid: this.state.viewId};
             var messageState = {status: 'msg', to: this.state.data.id, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
             if (this._msgToDb(messageState)) {
-                this.conn.send(JSON.stringify(messageState));
+                this._sendFireNoti(localStorage.getItem('uname') + ": " + this.state.newMessage);
+                // this.conn.send(JSON.stringify(messageState));
                 // this._getInfo();
                 this.state.messages.push({msg: this.state.newMessage, sender: this.state.id});
                 this.setState({newMessage: ''});

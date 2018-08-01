@@ -27,7 +27,7 @@ class LoginForm extends Component {
                     // this.setState({redirectToReferrer: true});
                     
                     setTimeout(function() {
-                        window.location = '/';
+                        window.location.reload();
                     }, 700);
                 } else if (responseJson.status === "ko" || responseJson.error === "no user") {
                     this.setState({wrongCred: true});
