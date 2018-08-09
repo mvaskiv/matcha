@@ -26,7 +26,11 @@ const LoginHeader = ({ title }) => (
 
 const Home = (props) => (
   <div>
-  <div className="welcome-bg"></div>
+  <div className="welcome-bg">
+  <video autoPlay muted loop className="video">
+    <source src="/FunataFair.mp4" type="video/mp4" />
+  </video>
+  </div>
   <div>
     <LoginHeader />
     {props.login ? <LoginForm /> : <Welcome />}
@@ -46,7 +50,11 @@ const Home = (props) => (
 
 const Login = (props) => (
   <div>
-  <div className="welcome-bg"></div>
+  <div className="welcome-bg">
+  <video autoPlay muted loop className="video">
+    <source src="/FunataFair.mp4" type="video/mp4" />
+  </video>
+  </div>
   <div>
     <LoginHeader />
     <LoginForm />

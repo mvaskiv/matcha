@@ -42,12 +42,26 @@ const UserThumbList = (props) => {
     var userava = props.data['avatar'];    
     var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";
 
-    return (
-        <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(-42, userid, userava, username)}>
-            <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
-            <p className='u-thumb-list-name'> { username } { surname } </p>
-        </div>
-    );
+    if (props.match) {
+        var r = new RegExp(props.match, 'i');
+            if (username.match(r)) {
+                return (
+                    <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(-42, userid, userava, username)}>
+                        <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
+                        <p className='u-thumb-list-name'> { username } { surname } </p>
+                    </div>
+                );
+            } else {
+                return null;
+            }
+        } else {
+        return (
+            <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(-42, userid, userava, username)}>
+                <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
+                <p className='u-thumb-list-name'> { username } { surname } </p>
+            </div>
+        );
+    }
 }
 
 class BrowseUsers extends Component {
@@ -55,17 +69,22 @@ class BrowseUsers extends Component {
         super(props);
         this.state = {
             dbEnd: false,
+            id: false,
             uid: '',
             users: '',
             sort: 'age',
             gender: false,
             start_age: 9,
             end_age: 99,
-            start: '0',
+            start: 0,
             number: 21
         }
         this._onScroll = this._onScroll.bind(this);
         this._scrollListener = this._scrollListener.bind(this);
+    }
+
+    async componentWillMount() {
+        await this.setState({id: localStorage.getItem('uid')});
     }
 
     componentDidMount() {
@@ -102,9 +121,11 @@ class BrowseUsers extends Component {
     async _onScroll() {
         var n = this.state.number + 21;
         await this.setState({number: n});
+        console.warn('sent');
         PostData('users', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
+                console.warn(responseJson);
                 var a = responseJson.data;
                 this.setState({users: a});
                 if (responseJson.status === 'dbEnd') {
@@ -476,6 +497,7 @@ class NewMessage extends Messages {
     constructor(props) {
         super(props);
         this.state = {
+            id: false,
             loaded: false,
             testsearch: false,
             users: false,
@@ -485,11 +507,16 @@ class NewMessage extends Messages {
             start_age: 9,
             end_age: 99,
             start: 0,
-            number: 15
+            number: 15,
+            search: '',
         }
         this._getAvailableUsers = this._getAvailableUsers.bind(this);
         this._scrollListener = this._scrollListener.bind(this);        
     };
+
+    async componentWillMount() {
+        await this.setState({id: localStorage.getItem('uid')});
+    }
 
     async componentDidMount() {
         await this._getAvailableUsers();
@@ -539,6 +566,14 @@ class NewMessage extends Messages {
         });
     }
 
+    onChange = (e) => {
+        this.setState({search: e.target.value});
+    }
+
+    _resetSearch() {
+        this.setState({search: ''});
+    }
+
     render() {
         if (!this.state.loaded) {
             return (
@@ -551,11 +586,13 @@ class NewMessage extends Messages {
                         </div>
                         <div>
                             <div className='form-element-group chat-search-input'>
-                                <input
+                            <input
                                     type='text'
                                     className='form-element search-in'
+                                    value={ this.state.search }
+                                    onChange={this.onChange}
                                     placeholder='Search' />
-                                <span onClick={() => this.testMessage()} className='form-element-extra search-snd-btn'><i className="fas fa-search"></i></span>
+                                <span onClick={ this._resetSearch } className='form-element-extra search-snd-btn'><i className={ this.state.search ? 'far fa-times-circle' : 'fas fa-search' }></i></span>
                             </div>
                         </div>
                     </div>
@@ -568,7 +605,7 @@ class NewMessage extends Messages {
                 var userlist = this.state.users.map((user, i) => {
                     if (user.id !== localStorage.getItem('uid')) {
                         return (
-                            <UserThumbList key={i} data={ user } />
+                            <UserThumbList key={i} data={ user } match={ this.state.search } />
                         );
                     }
                 });
@@ -587,8 +624,10 @@ class NewMessage extends Messages {
                                 <input
                                     type='text'
                                     className='form-element search-in'
+                                    value={ this.state.search }
+                                    onChange={this.onChange}
                                     placeholder='Search' />
-                                <span onClick={() => this.testMessage()} className='form-element-extra search-snd-btn'><i className="fas fa-search"></i></span>
+                                <span onClick={ this._resetSearch } className='form-element-extra search-snd-btn'><i className={ this.state.search ? 'far fa-times-circle' : 'fas fa-search' }></i></span>
                             </div>
                         </div>
                     </div>
@@ -898,9 +937,22 @@ class UserProfile extends Main {
             .bind(this),
             500
           );
-        // await Main.showProfile(-42);
-        // 
-        
+    }
+
+    _blockTheFucker = () => {
+        let toBlock = {
+            id: this.state.id,
+            token: this.state.token,
+            blocked: this.state.data.id,
+        }
+        PostData('bladd', toBlock).then((result) => {
+            let responseJson = result;
+            if (responseJson.status === 'ok') {
+                alert('You have successfully blocked this dirty animal.');
+            } else {
+                alert('Oops. server side error, please try again.')
+            }
+        });
     }
 
     render() {
@@ -925,8 +977,10 @@ class UserProfile extends Main {
                     <div className='basic-u-info'>
                         <h3> { username }, { userage } </h3>
                         <div className='btn-group'>
-                            <button onClick={() => this._openChat(userid, this.state.data.avatar, username)} className='btn btn-default'>Message</button>
-                            <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                            {this.state.data.match ?
+                                <button onClick={() => this._openChat(userid, this.state.data.avatar, username)} className='btn btn-default'>Message</button>
+                                : <button className='btn btn-default'><i className={ this.state.data.liked ? 'fas fa-kiss-wink-heart' : 'far fa-kiss-wink-heart'}></i>Like</button>}
+                            <button onClick={this._blockTheFucker} className='btn btn-default third'><i className="fas fa-user-lock"></i></button>
                         </div>
                     </div>
                 </div>
