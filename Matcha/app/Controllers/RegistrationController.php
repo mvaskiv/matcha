@@ -20,6 +20,7 @@ class RegistrationController{
     private $date;
     private $rt = array();
     protected $conn;
+    use \App\Traits\sendMail;
 
     protected function init(){
       $var = require_once 'sqlconf.php';
@@ -61,14 +62,27 @@ class RegistrationController{
     }
 
     private function exec(){
-      $stmt = $this->conn->prepare("INSERT INTO `user` (`f_name`, `l_name`, `u_name`,
-                  `gender`, `sex_preference`, `biography`, `tags`, `email`,
-                   `password`, `date`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-      $stmt->execute([$this->f_name, $this->l_name, $this->u_name,
-                  $this->gender, $this->sex_preference, $this->biography,
-                  $this->tags, $this->email, $this->psw, $this->date]);
-      $this->rt['status'] = 'ok';
-    }
+      // $stmt = $this->conn->prepare("INSERT INTO `user` (`f_name`, `l_name`, `u_name`,
+      //             `gender`, `sex_preference`, `biography`, `tags`, `email`,
+      //              `password`, `date`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      // $stmt->execute([$this->f_name, $this->l_name, $this->u_name,
+      //             $this->gender, $this->sex_preference, $this->biography,
+      //             $this->tags, $this->email, $this->psw, $this->date]);
+      // $this->rt['status'] = 'ok';
+
+     $stmt = $this->conn->prepare("INSERT INTO `user` (`f_name`, `l_name`, `u_name`,
+                 `gender`, `sex_preference`, `biography`, `tags`, `email`,
+                  `password`, `date`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+     $stmt->execute([$this->f_name, $this->l_name, $this->u_name,
+                 $this->gender, $this->sex_preference, $this->biography,
+                 $this->tags, $this->email, $this->psw, $this->date]);
+     $this->rt['status'] = 'ok';
+     $id = $this->conn->lastInsertId();
+     $link = $this->sendActivationMail(array('id' => $id, 'to' => $this->parsedBody['email']));
+     $stmt = $this->conn->prepare("UPDATE `user` SET `active_value` = ? WHERE `id` = ?");
+     $stmt->execute([$link, $id]);
+   }
+  
 
     private function ifis(){
       if (isset($this->parsedBody['email'])  && isset($this->parsedBody['password'])){

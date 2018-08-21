@@ -20,6 +20,9 @@ $password = '459512144';
   //  `user1` INT, `user2` INT)");
    $conn->exec("CREATE TABLE `messages` (`chat_id` INT,
    `sender` INT, `recipient` INT, `date` DATETIME DEFAULT CURRENT_TIMESTAMP, `msg` TEXT)");
+
+
+   
   echo "Connection sucssec\n";
 } catch (PDOException $e) {
   echo 'Conection is fail ' . $e->getMessage();

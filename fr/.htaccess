@@ -1,0 +1,8 @@
+RewriteEngine On
+RewriteRule ^about-us$ about.html
+RewriteRule ^our-team$ team.html
+RewriteRule ^events$ events.html
+RewriteRule ^downloads$ downloads.html
+RewriteRule ^contact-us$ contacts.html
+RewriteRule ^wrong-way-seems-the-more-reasonable$ 404.html
+ErrorDocument 404 /fr/404.html

@@ -72,6 +72,7 @@ class BrowseUsers extends Component {
             id: false,
             uid: '',
             users: '',
+           
             sort: 'age',
             gender: false,
             start_age: 9,
@@ -497,6 +498,7 @@ class NewMessage extends Messages {
     constructor(props) {
         super(props);
         this.state = {
+            token: localStorage.getItem('udata'),
             id: false,
             loaded: false,
             testsearch: false,
@@ -534,7 +536,7 @@ class NewMessage extends Messages {
     }
 
     async _getAvailableUsers() {
-        await PostData('users', this.state).then((result) => {
+        await PostData('getchatmates', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
                 var a = responseJson.data;
@@ -893,6 +895,7 @@ class UserProfile extends Main {
             token: localStorage.getItem('udata'),
             id: localStorage.getItem('uid'),
             viewId: '',
+            liked_id: '',
             data: ''
         }
     }
@@ -919,6 +922,23 @@ class UserProfile extends Main {
                 this.setState({data: a});
             }
         });
+    }
+
+    async _like() {
+        await this.setState({liked_id: this.state.viewId});
+        PostData('like', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson.status === 'ok') {
+                if (responseJson.mutual) {
+                    alert('You liked each other, nice!');
+                    return ;
+                }
+                alert('Liked');
+                return ;
+            } else {
+                alert('Ooops, server side error, please try again.');
+            }
+        })
     }
 
     _userAge(d) {
@@ -979,7 +999,7 @@ class UserProfile extends Main {
                         <div className='btn-group'>
                             {this.state.data.match ?
                                 <button onClick={() => this._openChat(userid, this.state.data.avatar, username)} className='btn btn-default'>Message</button>
-                                : <button className='btn btn-default'><i className={ this.state.data.liked ? 'fas fa-kiss-wink-heart' : 'far fa-kiss-wink-heart'}></i>Like</button>}
+                                : <button className='btn btn-default' onClick={() => this._like()}><i className={ this.state.data.liked ? 'fas fa-kiss-wink-heart' : 'far fa-kiss-wink-heart'}></i>Like</button>}
                             <button onClick={this._blockTheFucker} className='btn btn-default third'><i className="fas fa-user-lock"></i></button>
                         </div>
                     </div>

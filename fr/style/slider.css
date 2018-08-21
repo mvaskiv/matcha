@@ -1,0 +1,221 @@
+.owl-dots {
+    position: relative!important;
+    height: 1em;
+    bottom: 3em;
+}
+.owl-dots.disabled {
+    display: block!important;
+}
+.owl-dot {
+    height: 0.25em;
+/*    width: 4em;*/
+    padding: 0em 0.1em;
+    margin: 0.2em;
+    background-color: rgba(0,0,0,0.27)!important;
+    margin: 0.2em;
+    cursor: pointer;
+    transition: all 300ms ease 0s;
+    overflow: hidden;
+}
+.owl-dot.active {
+    background-color: rgba(255,255,255,0.57)!important;
+    transition: all 300ms ease 0s;
+}
+div.radio-cnt {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    bottom: 3em;
+    width: 10em;
+    flex-wrap: nowrap; 
+    z-index: 10;
+}
+.slider-wrapper ul {
+    display: flex;
+    flex-direction: row;
+    list-style: none;
+}
+
+.slider-wrapper ul li {
+    height: 0.25em;
+/*    width: 4em;*/
+    padding: 0em 0.1em;
+    background-color: rgba(0,0,0,0.27);
+    margin: 0.2em;
+    cursor: pointer;
+    transition: all 300ms ease 0s;
+}
+
+.slider-wrapper ul li:hover {
+    background-color: rgba(255,255,255,0.57);
+    transition: all 300ms ease 0s;
+}
+
+.slider-wrapper input[type=radio] {
+    position: relative;
+    top: -0.9em;
+    height: 0.6em;
+    width: 3em;
+    visibility: hidden;
+}
+
+
+
+
+.slide-1 {
+        display: table;
+    background: url('../src/hero/1.jpg') no-repeat center;
+  background-size: cover;
+  background-position: top;
+    width: 100vw!important;
+    height: 100vh;
+  left: 0;
+}
+.slide-2 {
+     display: table;
+  background: url('../src/hero/2.jpg') no-repeat center;
+  background-size: cover;
+  background-position: top;
+    width: 100vw!important;
+    height: 100vh;
+}
+.slide-3 {
+        display: table;
+  background: url('../src/hero/3.jpg') no-repeat center;
+  background-size: cover;
+  background-position: top;
+    width: 100vw!important;
+    height: 100vh;
+}
+/*
+.slide-4 {
+  background: url('assets/slides/Slayder_Meat_Drive_2.jpg') no-repeat center;
+  background-size: cover;
+  left: 300%;
+}
+.slide-5 {
+  background: url('assets/slides/Slayd_Pivo__3.jpg') no-repeat center;
+  background-size: cover;
+  left: 400%;
+}
+*/
+
+.slider-content {
+/*  width: 100vw;*/
+/*    height: 100vh;*/
+/*    display: block;*/
+    color: #fff;
+    display: table-cell;
+    text-align: center!important;
+    vertical-align: middle;
+}
+
+.slider-content h2 {
+  color: #ffffff;
+  font-family: "Kelson Sans Bold Ru";
+  font-size: 3em;
+  line-height: 8px;
+  font-weight: 500;
+    letter-spacing: .5px;
+  margin-top: 0;
+/*    mix-blend-mode:exclusion;*/
+    
+}
+
+.slider-content h4 {
+  color: #ffffff;
+  font-family: "Kelson Sans Ru";
+  font-size: 1.5em;
+  line-height: 1.3em;
+    letter-spacing: .5px;
+}
+
+.slider > img {
+  position: absolute;
+  right: 0%;
+  bottom: 0;
+  height: 100%;
+  opacity: 0;
+  -webkit-transform: translateX(500px);
+  transform: translateX(500px);
+}
+
+.slide-1 > img {
+  right: 0;
+}
+
+.slider h2 {
+  -webkit-transition: opacity 1400ms, -webkit-transform 1400ms;
+  transition: transform 1400ms, opacity 1400ms;
+  -webkit-transition-delay: 1.4s; /* Safari */
+  transition-delay: 4000ms;
+}
+.slider h4 {
+  -webkit-transition: opacity 800ms, -webkit-transform 800ms;
+  transition: transform 800ms, opacity 800ms;
+  -webkit-transition-delay: 1.4s; /* Safari */
+  transition-delay: 4300ms;
+}
+.slider > img {
+  -webkit-transition: opacity 800ms, -webkit-transform 800ms;
+  transition: transform 800ms, opacity 800ms;
+  -webkit-transition-delay: 1.2s; /* Safari */
+  transition-delay: 4000ms;
+}
+
+.slide-radio1:checked ~ .slider {
+  -webkit-transform: translateX(0%);
+  transform: translateX(0%);
+}
+.slide-radio2:checked ~ .slider {
+  -webkit-transform: translateX(-100%);
+  transform: translateX(-100%);
+}
+.slide-radio3:checked ~ .slider {
+  -webkit-transform: translateX(-200%);
+  transform: translateX(-200%);
+}
+.slide-radio4:checked ~ .slider {
+  -webkit-transform: translateX(-300%);
+  transform: translateX(-300%);
+}
+.slide-radio5:checked ~ .slider {
+  -webkit-transform: translateX(-400%);
+  transform: translateX(-400%);
+}
+
+.slide-radio1:checked ~ .slide-1 h2,
+.slide-radio2:checked ~ .slide-2 h2,
+.slide-radio3:checked ~ .slide-3 h2,
+.slide-radio4:checked ~ .slide-4 h2,
+.slide-radio5:checked ~ .slide-5 h2,
+.slide-radio1:checked ~ .slide-1 h4,
+.slide-radio2:checked ~ .slide-2 h4,
+.slide-radio3:checked ~ .slide-3 h4,
+.slide-radio4:checked ~ .slide-4 h4,
+.slide-radio5:checked ~ .slide-5 h4,
+.slide-radio1:checked ~ .slide-1 > img,
+.slide-radio2:checked ~ .slide-2 > img,
+.slide-radio3:checked ~ .slide-3 > img,
+.slide-radio4:checked ~ .slide-4 > img,
+.slide-radio5:checked ~ .slide-5 > img {
+  -webkit-transform: translateX(0);
+  transform: translateX(0);
+  opacity: 1;
+}
+
+@keyframes fadeIn
+{
+  0%   {opacity:0}
+  100% { opacity: 1}
+}
+@keyframes fadeOutnIn
+{
+  0%    {opacity:1}
+  92%   {opacity: 1}
+  94%   {opacity: 0}
+  98%   {opacity: 0}
+  100%  {opacity: 1}
+}

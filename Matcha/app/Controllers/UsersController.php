@@ -85,17 +85,18 @@ class UsersController extends BasicToken {
         return ;
       }
     if ($stmt->execute()){
+      $block = $this->block();
       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-        // if (!empty($row['all_foto'] && !empty($row['avatar']))){
-        //   $tmp = unserialize($row['all_foto']);
-        //   if (isset($tmp[inval($row['avatar'])]))
-        //     $row['avatar'] = $tmp[inval($row['avatar'])];
-        //   }
-        //   else
-        //     $row['avatar'] = 'error';
-
-          unset($row['all_foto']);
-        array_push($usr, $row);
+        $blk = true;
+        foreach($block as $el){
+          if ($el['blocked'] === $row['id']) {
+            $blk = false;
+            $this->parsedBody['number']--;
+          }
+        }
+        unset($row['all_foto']);
+        if ($blk)
+          array_push($usr, $row);
       }
     }
     $this->rt['data'] = $usr;
@@ -104,5 +105,11 @@ class UsersController extends BasicToken {
         $this->rt['status'] = 'dbEnd';
     }
   return true;
-}
+  }
+  public function block(){
+    $stmt = $this->conn->prepare("SELECT * FROM `black_list` WHERE id = ?");
+    $stmt->execute([$this->parsedBody['id']]);
+    $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return ($row);
+  }
 }
