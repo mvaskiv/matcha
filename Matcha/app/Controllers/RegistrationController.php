@@ -78,11 +78,12 @@ class RegistrationController{
                  $this->tags, $this->email, $this->psw, $this->date]);
      $this->rt['status'] = 'ok';
      $id = $this->conn->lastInsertId();
+     $this->insertTags($id);
      $link = $this->sendActivationMail(array('id' => $id, 'to' => $this->parsedBody['email']));
      $stmt = $this->conn->prepare("UPDATE `user` SET `active_value` = ? WHERE `id` = ?");
      $stmt->execute([$link, $id]);
    }
-  
+
 
     private function ifis(){
       if (isset($this->parsedBody['email'])  && isset($this->parsedBody['password'])){
@@ -114,5 +115,13 @@ class RegistrationController{
         }
       }
       return true;
+    }
+
+    private function insertTags($id){
+      $tmp = preg_split('/ +/', $this->tags);
+      foreach ($tmp as $el){
+        $stmt = $this->conn->prepare("INSERT INTO `tags` (`user_id`, `tags`) VALUES(?, ?)");
+        $stmt->execute([$id, $el]);
+      }
     }
 }
