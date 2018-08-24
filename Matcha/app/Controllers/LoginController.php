@@ -39,6 +39,11 @@ class LoginController extends BasicToken {
         $this->rt['error'] = 'no user';
         return false;
     }
+    if ($row['active'] == 0){
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no activation';
+      return false;
+  }
     else if (hash('ripemd160', $this->parsedBody['password']) != $row['password']){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'password dose not match';

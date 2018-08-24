@@ -31,7 +31,7 @@ class MyprofileController extends BasicToken {
         }
     if ($this->exec())
       $this->rt['status'] = 'ok';
-    $this->rt['token'] = $this->update($this->parsedBody['token']);
+      $this->rt['token'] = $this->update($this->parsedBody['token']);
   } catch (\Exception $e){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'token is broken';

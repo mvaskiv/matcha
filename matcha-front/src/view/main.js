@@ -34,6 +34,22 @@ const UserThumb = (props) => {
     );
 }
 
+const UserThumbList = (props) => {
+    var username = props.data['f_name'];
+    var surname = props.data['l_name'];
+    var userid = props.data['id'];
+    var usergen = props.data['gender'];
+    var userava = props.data['avatar'];    
+    var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";
+
+    return (
+        <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(userid)}>
+            <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
+            <p className='u-thumb-list-name'> { username } { surname } </p>
+        </div>
+    );
+}
+
 class BrowseUsers extends Component {
     constructor(props) {
         super(props);
@@ -338,22 +354,12 @@ class Notifications extends Main {
     }
 }
 
-const NewMessage = (props) => (
-    <div className='messages-panel'>
-        <div className='menu-nav tac'>
-            <a href="#"><i onClick={() => Messages.resetChat()} className="fas fa-arrow-left fll"></i></a>
-            <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
-            <h4 className='menu-head'>Messages</h4>
-        </div>
-    </div>
-)
-
 const MessagePreview = (props) => {
     var username = props.data[0];
     var chatid = props.data[1];
     var previewText = props.data[2];
     return (
-        <li key={this}>
+        <li key={this} onClick={() => Messages.setChatid(chatid)}>
             <div className="message-header">
                 <div className="usr-thumb-sm">
                     <img className='usr-thumb-pic-sm' alt='' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' />
@@ -370,32 +376,56 @@ class Messages extends Main {
     constructor() {
         super();
         this.state = {
+            token: localStorage.getItem('udata'),
+            id: localStorage.getItem('uid'),
+            chats: false,
             chatid: '',
             new: false
         }
         Messages.resetChat = Messages.resetChat.bind(this);
         Messages.setChatid = Messages.setChatid.bind(this);
+        Messages.backToMessages = Messages.backToMessages.bind(this);
+    }
+
+    componentDidMount() {
+        PostData('getchats', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson.data;
+                this.setState({chats: a});
+                if (responseJson.status === 'dbEnd') {
+                    this.setState({dbEnd: true});
+                    // this.ulist.removeEventListener('scroll', this._scrollListener);
+                    return ;
+                }
+            }
+        });
     }
 
     static resetChat () {
         this.setState({chatid: ''});
-        this.setState({new: false});
+        // this.setState({new: false});
     }
 
     static setChatid(a) {
         this.setState({chatid: a});
+        // this.setState({new: false});
     }
 
+    static backToMessages() {
+        this.setState({chatid: false});
+        this.setState({new: false});
+    }
 
     render () {
-        var messages = [['Kate', '1', 'Hey, how are you?'], ['John', '2', 'Hello sweetie'], ['Vasya', '3', 'You stole my heart...']];        
-        if (this.state.new) {
-            return <NewMessage />
-        } else if (this.state.chatid) {
+        var messages = [['Mike', '103', 'Hey, how are you?'], ['John', '2', 'Hello sweetie'], ['Vasya', '3', 'You stole my heart...']];        
+        if (this.state.chatid) {
             return (
                 <Chat
                     id={this.state.chatid} />
             );
+        } else if (this.state.new) {
+            return <NewMessage />
         } else {
             return (
                 <div className='messages-panel'>
@@ -419,35 +449,193 @@ class Messages extends Main {
     }
 }
 
+class NewMessage extends Messages {
+    constructor(props) {
+        super(props);
+        this.state = {
+            loaded: false,
+            testsearch: false,
+            users: false,
+            message: false,
+            sort: 'age',
+            gender: false,
+            start_age: 9,
+            end_age: 99,
+            start: 0,
+            number: 15
+        }
+        this._getAvailableUsers = this._getAvailableUsers.bind(this);
+        this._scrollListener = this._scrollListener.bind(this);        
+    };
+
+    async componentDidMount() {
+        await this._getAvailableUsers();
+        this.ulist.addEventListener('scroll', this._scrollListener);        
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.onScroll, false);
+    }
+
+    _scrollListener() {
+        if (this.ulist.scrollTop + this.ulist.clientHeight >= this.ulist.scrollHeight) {
+            this._onScroll();
+        }
+    }
+
+    async _getAvailableUsers() {
+        await PostData('users', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson.data;
+                this.setState({users: a});
+                if (responseJson.status === 'dbEnd') {
+                    this.setState({dbEnd: true});
+                    // this.ulist.removeEventListener('scroll', this._scrollListener);
+                    return ;
+                }
+            }
+        });
+        await this.setState({loaded: true});
+    }
+
+    async _onScroll() {
+        var n = this.state.number + 15;
+        await this.setState({number: n});
+        PostData('users', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson.data;
+                this.setState({users: a});
+                if (responseJson.status === 'dbEnd') {
+                    this.setState({dbEnd: true});
+                    // this.ulist.removeEventListener('scroll', this._scrollListener);
+                    return ;
+                }
+            }
+        });
+    }
+
+    render() {
+        if (!this.state.loaded) {
+            return (
+                <div>
+                    <div className='menu-nav-new tac'>
+                        <div>
+                            <a href="#"><i onClick={() => Messages.backToMessages()} className="fas fa-arrow-left fll"></i></a>
+                            <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
+                            <h4 className='menu-head'>Messages</h4>
+                        </div>
+                        <div>
+                            <div className='form-element-group chat-search-input'>
+                                <input
+                                    type='text'
+                                    className='form-element search-in'
+                                    placeholder='Search' />
+                                <span onClick={() => this.testMessage()} className='form-element-extra search-snd-btn'><i className="fas fa-search"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='preloader-div'><img className='cool-preloader-img' src='https://media.giphy.com/media/26xBMTrIhFT1YYe7m/source.gif' alt='' /></div>
+                </div>
+            );
+            // return <div className='preloader-div'><img className='cool-preloader-img' src='https://i.pinimg.com/originals/bb/9e/45/bb9e4523225243dacfd02ebc653b5b6d.gif' alt='' /></div>
+        } else if (this.state.loaded) {
+            if (this.state.users) {
+                var userlist = this.state.users.map((user, i) => {
+                    if (user.id !== localStorage.getItem('uid')) {
+                        return (
+                            <UserThumbList key={i} data={ user } />
+                        );
+                    }
+                });
+            }
+            
+            return (
+                <div>
+                    <div className='menu-nav-new tac'>
+                        <div>
+                            <a href="#"><i onClick={() => Messages.backToMessages()} className="fas fa-arrow-left fll"></i></a>
+                            <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
+                            <h4 className='menu-head'>Messages</h4>
+                        </div>
+                        <div>
+                            <div className='form-element-group chat-search-input'>
+                                <input
+                                    type='text'
+                                    className='form-element search-in'
+                                    placeholder='Search' />
+                                <span onClick={() => this.testMessage()} className='form-element-extra search-snd-btn'><i className="fas fa-search"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='messages-panel' ref={ulist => {this.ulist = ulist;}}>
+                        { userlist }
+                        <div className='preload-cnt'><img className='preloader-u-msg-lst' src="http://www.wellnessexpome.com/wp-content/uploads/2018/06/pre-loader.gif"
+                        style={{display: this.state.dbEnd ? 'none' : 'block'}}/></div>
+                    </div>
+                </div>
+            )
+        }
+    }    
+}
+
 class Chat extends Messages {
     constructor(props) {
         super(props);
         this.state = {
+            token: localStorage.getItem('udata'),
+            id: localStorage.getItem('uid'),
+            viewId: false,
             focus: false,
             updated: false,
+            data: false,
             newMessage: '',
-            messages: [['Hey', '1'], ['Go away', '0'], ['Why??!?!?!??!?!?!?!', '1'], ['Because', '0'], ['Noooo', '1'], ['Pleaseeeee', '1'], ['Hey', '1'], ['Go away', '0']]
+            messages: [['Hey', '0']]
         }
-        this.testMessage = this.testMessage.bind(this);
+        this.testMessage = this._sendMesssage.bind(this);
         this.InputOnFocus = this.InputOnFocus.bind(this);
         this.onChange = this.onChange.bind(this);
+        this._getInfo = this._getInfo.bind(this);
+        this.changeView = this.changeView.bind(this);
         this.conn = new WebSocket('ws://localhost:8200?id=' + localStorage.getItem('uid'));
         this.conn.onmessage = (e) => {
-            // console.log(str.message);            
+            console.log(e.data);            
             this._msgReceived(e.data);
         };
     }
 
     async _msgReceived(e) {
         var str = JSON.parse(e);
-        console.log(str.sender);
-        
-        await this.state.messages.push([str.message, str.sender]);
-        // this.setState({updated: true});
+        // console.log(str.message);
+        if (str.message) {
+            await this.state.messages.push([str.message, str.sender]);
+        } else if (str.message && str.status !== "ok") {
+            alert ("Ooops, something's gone wrong. Please, try again.");
+        }
+        this.setState({updated: true});
+    }
+
+    changeView() {
+        this.setState({viewId: this.props.id});
+    }
+
+    async _getInfo() {
+        await this.changeView();
+        PostData('myprofile', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson) {
+                var a = responseJson[0];
+                this.setState({data: a});
+            }
+        });
     }
 
     componentDidMount() {
-        this.msglst.lastChild.scrollIntoView(!0);
+        // this.msglst.lastChild.scrollIntoView(!0);
+        if (this.props.id && (this.props.id !== this.state.viewId)) {
+            this._getInfo();
+        }
         this.conn.onopen = function(e) {
             console.log("Connection established!");
         };
@@ -455,7 +643,12 @@ class Chat extends Messages {
     }
 
     componentDidUpdate() {
-        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        if (this.props.id && (this.props.id !== this.state.viewId)) {
+            this._getInfo();
+        }
+        if (this.msglst) {
+            this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        }
         // if (this.state.updated) {
         //     this.setState({updated: false});
         // }
@@ -465,13 +658,26 @@ class Chat extends Messages {
         this.setState({[e.target.name]:e.target.value});
     }
 
-    testMessage() {
+    async _msgToDb(msg) {
+        await PostData('send', msg).then((result) => {
+            let responseJson = result;
+            if (responseJson.status === 'ok') {
+                return true;
+            } else {
+                return false;
+            }
+        });
+    }
+
+    async _sendMesssage() {
         if (this.state.newMessage) {
             var message = {message: this.state.newMessage, sender: localStorage.getItem('uid')};
-            var messageState = JSON.stringify({status: 'msg', to: '103', token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)});
-            this.conn.send(messageState);
-            this.state.messages.push([this.state.newMessage, localStorage.getItem('uid')]);
-            this.setState({newMessage: ''});
+            var messageState = {status: 'msg', to: this.state.viewId, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
+            if (this._msgToDb(messageState)) {
+                this.conn.send(JSON.stringify(messageState));
+                if (this.state.id !== this.state.viewId) {this.state.messages.push([this.state.newMessage, localStorage.getItem('uid')]);}
+                this.setState({newMessage: ''});
+            }
         }
     }
 
@@ -484,29 +690,32 @@ class Chat extends Messages {
 
     render () {
         var myid = localStorage.getItem('uid');
-        if (this.props.id == 1) {
-            var display = this.state.messages.map((message) => {
-                return (
-                    <li className='msg-cps'>
-                        <p className={(message[1] === myid ? 'sent-message btn' : 'received-message btn')}>{message[0]}<span className={(message[1] === myid ? 'msg-time-r' : 'msg-time-l')}>22:00</span></p>
-                    </li>
-                );
-            })
-        } else {
-            var display = null;
+
+        var display = this.state.messages.map((message) => {
+            return (
+                <li className='msg-cps'>
+                    <img className='chat-u-thumb' src={this.state.data.avatar ? '/Matcha/uploads/' + this.state.data.avatar : 'Matcha/uploads/avatar-placeholder.png'} style={{ display: message[1] === myid ? 'none' : 'block' }}/>
+                    <p className={(message[1] === myid ? 'sent-message btn' : 'received-message btn')}>{message[0]}<span className={(message[1] === myid ? 'msg-time-r' : 'msg-time-l')}>22:00</span></p>
+                </li>
+            );
+        })
+        if (this.state.data) {
+            var username = this.state.data['f_name'];
         }
         return (
-            <div className='chat-panel'>
-                <div className='menu-nav tac'>
-                    <a href="#"><i onClick={() => Messages.resetChat()} className="fas fa-arrow-left fll"></i></a>
-                    <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
-                    <h4 className='menu-head'>Messages</h4>
+            <div>
+                <div className='chat-panel'>
+                    <div className='menu-nav tac'>
+                        <a href="#"><i onClick={() => Messages.resetChat()} className="fas fa-arrow-left fll"></i></a>
+                        <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
+                        <h4 className='menu-head'> { username } </h4>
+                    </div>
+                    <div className='chat-self'>
+                        <ul ref={msglst => {this.msglst = msglst;}}>
+                            { display }
+                        </ul>
+                    </div >
                 </div>
-                <div className='chat-self'>
-                    <ul ref={msglst => {this.msglst = msglst;}}>
-                        { display }
-                    </ul>
-                </div >
                 <div className='form-element-group msg-input'>
                     <input
                         type='text'
@@ -517,7 +726,7 @@ class Chat extends Messages {
                         onChange={this.onChange}
                         onFocus={() => this.InputOnFocus(1)}
                         onBlur={() => this.InputOnFocus(0)} />
-                    <span onClick={() => this.testMessage()} className='form-element-extra msg-snd-btn'><i className="fab fa-telegram-plane"></i></span>
+                    <span onClick={() => this._sendMesssage()} className='form-element-extra msg-snd-btn'><i className="fab fa-telegram-plane"></i></span>
                 </div>
             </div>
         );
@@ -538,6 +747,9 @@ class UserProfile extends Main {
     componentDidUpdate() {
         if (this.props.id && (this.props.id !== this.state.viewId)) {
             this._getInfo();
+        } else if (!this.props.id && this.state.data) {
+            this.setState({viewId: false});
+            this.setState({data: false});
         }
     }
 
@@ -563,6 +775,12 @@ class UserProfile extends Main {
         return Math.abs(aT.getUTCFullYear() - 1970);
     }
 
+    _openChat(id) {
+        // Messages.setChatid(id);
+        // Main.showProfile(-42);
+        // Main.callMessages(0);
+    }
+
     render() {
         if (this.state.data) {
             // this._getInfo();
@@ -585,14 +803,12 @@ class UserProfile extends Main {
                     <div className='basic-u-info'>
                         <h3> { username }, { userage } </h3>
                         <div className='btn-group'>
-                            <button className='btn btn-default'>Message</button>
+                            <button onClick={() => this._openChat(userid)} className='btn btn-default'>Message</button>
                             <button className='btn btn-default third'><i className="far fa-star"></i></button>
                         </div>
                     </div>
                 </div>
-                
                 <div className='ext-u-info' style={{ marginTop: this.state.avaUploadBox ? 8.8 + 'em' : 5.4 + 'em' }} >
-                    
                     <div className='ext-u-info2'>
                         <div className='full u-int'>
                             <div className='fll half'>
@@ -622,7 +838,8 @@ class UserProfile extends Main {
             </div>
             )
         } else {
-            return null;
+            // return <div className='preloader-div'><img className='cool-preloader-img' src='https://i.pinimg.com/originals/bb/9e/45/bb9e4523225243dacfd02ebc653b5b6d.gif' alt='' /></div>
+            return <div className='preloader-div'><img className='cool-preloader-img' src='https://media.giphy.com/media/26xBMTrIhFT1YYe7m/source.gif' alt='' /></div>
         }
     }
 }
@@ -676,10 +893,10 @@ class Profile extends Main {
 
     async _setAvatar(a) {
         var imgState = { photo: a, id: this.state.id, token: this.state.token };
-        await this.setState({imgUpload: imgState});
-        console.log(a);
+        await this.setState({imgUpload: false});
+        // console.log(a);
         if (window.confirm("Would you like to use this photograph as your profile picture?")) {
-            PostData('myprofile/avatar', this.state.imgUpload).then((result) => {
+            PostData('myprofile/avatar', imgState).then((result) => {
                 let responseJson = result;
                 if (responseJson) {
                     if (responseJson.status === 'ok') {
@@ -815,14 +1032,16 @@ class Profile extends Main {
             var userbio = this.state.me['biography'];
             var userava = this.state.me['avatar'];
             var upics = this.state.me['all_foto'] ? JSON.parse(this.state.me['all_foto']) : null;
-            // const userphotos = upics.map((photo, i) => {
-            //     return (
-            //     <div className='photo-thumb-cnt'>
-            //         {/* <i onClick={() => this._deletePic(i)} className="far fa-times-circle flr mar5 del-pic"></i> */}
-            //         <img onClick={() => this._showPicture(i)} className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} />
-            //     </div>
-            //     );
-            // })
+            
+                const userphotos = upics ? upics.map((photo, i) => {
+                    return (
+                        <div className='photo-thumb-cnt'>
+                            {/* <i onClick={() => this._deletePic(i)} className="far fa-times-circle flr mar5 del-pic"></i> */}
+                            <img onClick={() => this._showPicture(i)} className='photos-thumb' src={ '/Matcha/uploads/' + photo } alt={i} />
+                        </div>
+                    );
+                }) : null;
+            
             const pictureDisplay = (
                 <div>
                     <div className='photo-v-head'>
@@ -836,7 +1055,7 @@ class Profile extends Main {
                             <button onClick={() => this._deletePic(this.state.displayPicture)} className='btn btn-default third'><i className="fas fa-trash"></i></button>
                         </div>
                     </div>
-                    {/* <img className='picture-v-lg' src={ '/Matcha/uploads/' + upics[this.state.displayPicture] } alt='' /> */}
+                    <img className='picture-v-lg' src={this.state.displayPicture ? '/Matcha/uploads/' + upics[this.state.displayPicture] : ''} alt='' />
                 </div>
             );
             return (
@@ -890,7 +1109,7 @@ class Profile extends Main {
                         
                         <div className='ext-u-photos'>
                             <label>My Photos</label>
-                            {/* { userphotos } */}
+                            { userphotos }
                         </div>
                     </div>
                 </div>

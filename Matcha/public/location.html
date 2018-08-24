@@ -1,0 +1,57 @@
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <head>
+    <body>
+      <button onclick="getLocation()">Location</button>
+
+      <p id="demo"></p>
+
+      <script>
+      var x = document.getElementById("demo");
+
+      function getLocation() {
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(showPosition, showError);
+          } else {
+              x.innerHTML = "Geolocation is not supported by this browser.";
+          }
+      }
+
+      function showPosition(position) {
+          x.innerHTML = "Latitude: " + position.coords.latitude +
+          "<br>Longitude: " + position.coords.longitude;
+      }
+
+      function showError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            ipLookUp();
+            break;
+        case error.POSITION_UNAVAILABLE:
+            x.innerHTML = "Location information is unavailable."
+            break;
+        case error.TIMEOUT:
+            x.innerHTML = "The request to get user location timed out."
+            break;
+        case error.UNKNOWN_ERROR:
+            x.innerHTML = "An unknown error occurred."
+            break;
+    }
+  }
+      function ipLookUp () {
+          $.ajax('http://ip-api.com/json')
+          .then(
+              function success(response) {
+                  x.innerHTML = response.city;
+              },
+
+              function fail(data, status) {
+                  console.log('Request failed.  Returned status of',
+                              status);
+              }
+          );
+        }
+      </script>
+<body>
+<html>

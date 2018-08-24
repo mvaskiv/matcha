@@ -9,11 +9,12 @@ class UserIndetify extends BasicToken {
   public $pool = array();
   private $conn;
 
-  public function __construct(){
-    $var = include "sqlconf.php";
-    $this->conn = new PDO('mysql:host=localhost;dbname=matcha_db', $var['user'], $var['password']);
-    $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  }
+  // public function __construct(){
+  //   //$var = include "sqlconf.php";
+  //   $this->conn = new PDO('mysql:host=localhost;dbname=matcha_db', 'root', '459512144');
+  //   $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  //   echo ('work'\n);
+  // }
 
   public function addUser($id, $chat_id){
     $tmp = array(
@@ -21,6 +22,9 @@ class UserIndetify extends BasicToken {
       'chat_id' => $chat_id
     );
     array_push($this->pool, $tmp);
+    $this->conn = new PDO('mysql:host=localhost;dbname=matcha_db', 'root', '459512144');
+    $stmt = $this->conn->prepare("INSERT INTO `fotos` (id_user) VALUES('777')");
+    $stmt->execute();
     $sql = include "sqlconf.php";
     print_r($sql);
   }

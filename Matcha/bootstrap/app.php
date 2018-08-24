@@ -54,4 +54,28 @@ $container['ChatController'] = function($container){
   return new \App\Controllers\ChatController;
 };
 
+$container['blockUserController'] = function($container){
+  return new \App\Controllers\blockUserController;
+};
+
+$container['LikeController'] = function($container){
+  return new \App\Controllers\LikeController;
+};
+
+$container['ConfirmationController'] = function($container){
+  return new \App\Controllers\ConfirmationController;
+};
+
+$container['FogetController'] = function($container){
+  return new \App\Controllers\FogetController;
+};
+
+$container['UpdateUserController'] = function($container){
+  return new \App\Controllers\UpdateUserController;
+};
+
+$container['BothLikeController'] = function($container){
+  return new \App\Controllers\BothLikeController;
+};
+
 require_once __DIR__.'/../app/routes.php';

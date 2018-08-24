@@ -10,6 +10,7 @@ use App\Retchet\UserIndetify;
 class Chat implements MessageComponentInterface {
     protected $clients;
     private $user;
+    private $f;
 
     public function __construct() {
         $this->clients = new \SplObjectStorage;
@@ -20,7 +21,7 @@ class Chat implements MessageComponentInterface {
         // Store the new connection to send messages to later
         $this->clients->attach($conn);
         $querystring = (explode('=', $conn->httpRequest->getUri()->getQuery()))[1];
-        $this->user->addUser($querystring ,$conn->resourceId);
+        $f = $this->user->addUser($querystring ,$conn->resourceId);
 
         echo "New connection! ({$conn->resourceId}) id ({$querystring})\n";
     }
@@ -30,6 +31,7 @@ class Chat implements MessageComponentInterface {
         $rt = array();
         $token = "";
 
+        //$from->send(print_r($this->f, true));
         $tmp = json_decode($msg, true);
         if (!$tmp || !($token = $this->user->checkInput($tmp))){
           $this->rt['status'] = 'ko';
@@ -37,7 +39,7 @@ class Chat implements MessageComponentInterface {
           $from->send(json_encode($this->rt));
           return ;
         }
-        $tmp = json_decode($json, true);
+        $tmp = json_decode($msg, true);
         if (!($token =$this->user->checkInput($tmp))){
           $this->rt['status'] = 'ko';
           $this->rt['error'] = 'error';
@@ -55,16 +57,15 @@ class Chat implements MessageComponentInterface {
           $this->rt['token'] = $token;
            $from->send(json_encode($this->rt));
         }
-
         //write message to database
-        if ($this->$tmp['status'] == 'msg'){
-            if (!$this->user->write_to_db($this->$tmp['to'], $from->resourceId, $this->tmp['msg'])){
-              $this->rt['status'] = 'ko';
-              $this->rt['error'] = 'chat is imposible';
-              $from->send(json_encode($this->rt));
-              return ;
-            }
-        }
+        // if ($tmp['status'] == 'msg'){
+        //     if (!$this->user->write_to_db($tmp['to'], $from->resourceId, $tmp['msg'])){
+        //       $this->rt['status'] = 'ko';
+        //       $this->rt['error'] = 'chat is imposible';
+        //       $from->send(json_encode($this->rt));
+        //       return ;
+        //     }
+        // }
 
         //send to user
         foreach($this->user->pool as $el){
@@ -73,7 +74,6 @@ class Chat implements MessageComponentInterface {
               if ($el['chat_id'] === $client->resourceId) {
                 $client->send($tmp['msg']);
               }
-              break ;
             }
           }
        }

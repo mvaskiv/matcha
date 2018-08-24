@@ -21,7 +21,10 @@ class RegistrationController{
     private $rt = array();
     protected $conn;
 
+    use \App\Traits\sendMail;
+
     protected function init(){
+
       $var = require_once 'sqlconf.php';
       $this->conn = new PDO($var['dsn'], $var['user'], $var['password']);
       $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -68,6 +71,10 @@ class RegistrationController{
                   $this->gender, $this->sex_preference, $this->biography,
                   $this->tags, $this->email, $this->psw, $this->date]);
       $this->rt['status'] = 'ok';
+      $id = $this->conn->lastInsertId();
+      $link = $this->sendActivationMail(array('id' => $id, 'to' => $this->parsedBody['email']));
+      $stmt = $this->conn->prepare("UPDATE `user` SET `active_value` = ? WHERE `id` = ?");
+      $stmt->execute([$link, $id]);
     }
 
     private function ifis(){

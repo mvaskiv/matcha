@@ -53,7 +53,8 @@ class UsersController extends BasicToken {
     $stmtq->execute();
     $row_q = $stmtq->rowCount();
     if ($this->parsedBody['sort'] == 'unsort')
-      $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto, fotos.avatar FROM user LEFT JOIN fotos ON fotos.id_user=user.id LIMIT $start, $number");
+      $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto, fotos.avatar
+                                    FROM user LEFT JOIN fotos ON fotos.id_user=user.id LIMIT $start, $number");
     else if ($this->parsedBody['sort'] == 'age'){
       $start_age = $this->parsedBody['start_age'];
       $end_age = $this->parsedBody['end_age'];
@@ -85,17 +86,23 @@ class UsersController extends BasicToken {
         return ;
       }
     if ($stmt->execute()){
+      $block = $this->block();
       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-        // if (!empty($row['all_foto'] && !empty($row['avatar']))){
-        //   $tmp = unserialize($row['all_foto']);
-        //   if (isset($tmp[inval($row['avatar'])]))
-        //     $row['avatar'] = $tmp[inval($row['avatar'])];
-        //   }
-        //   else
-        //     $row['avatar'] = 'error';
-
-          unset($row['all_foto']);
-        array_push($usr, $row);
+        $blk = true;
+        if (!empty($row['all_foto'] && !empty($row['avatar']))){
+          $tmp = unserialize($row['all_foto']);
+          if (isset($tmp[inval($row['avatar'])]))
+            $row['avatar'] = $tmp[inval($row['avatar'])];
+          }
+          else
+            $row['avatar'] = 'error';
+        foreach($block as $el){
+          if ($el['blocked'] === $row['id'])
+            $blk = false;
+        }
+        unset($row['all_foto']);
+        if ($blk)
+          array_push($usr, $row);
       }
     }
     $this->rt['data'] = $usr;
@@ -105,4 +112,12 @@ class UsersController extends BasicToken {
     }
   return true;
 }
+
+  public function block(){
+    $stmt = $this->conn->prepare("SELECT * FROM `black_list` WHERE id = ?");
+    $stmt->execute([$this->parsedBody['id']]);
+    $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return ($row);
+  }
+
 }
