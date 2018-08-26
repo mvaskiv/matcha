@@ -35,9 +35,8 @@ public function foget($request, $response){
    return json_encode(array('status' => 'ko', 'error' => 'dose not id in db'));
   $email = $tmp[0]['email'];
   if (hash('ripemd160', $email).hash('ripemd160', "secret") == $this->parsedBody['key']){
-    //TODO : request on password change
-    $sql = "UPDATE `user` SET `password` = ? WHERE `id` = ?";
-    $this->execUpdateInsert($sql, array(hash('ripemd160', $this->parsedBody['password']), $this->parsedBody['id']));
+  $sql = "UPDATE `user` SET `password` = ? WHERE `id` = ?";
+   $this->execUpdateInsert($sql, array(hash('ripemd160', $this->parsedBody['password']), $this->parsedBody['id']));
     return json_encode(array('status' => 'ok'));
   }
   return json_encode(array('status' => 'ko', 'error' => 'wrong key'));

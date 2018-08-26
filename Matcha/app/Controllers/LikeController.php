@@ -24,6 +24,8 @@ public function insert($request, $response){
     if ($this->exist_like()){
       $this->execUpdateInsert("INSERT INTO `u_likes` (`u1`, `u2`) VALUES(?, ?)",
               array($this->parsedBody['id'], $this->parsedBody['liked_id']));
+              //inser this line 
+      $this->execUpdateInsert("UPDATE `user` SET `rate` = `rate` + 1 WHERE id = ?", array($this->parsedBody['liked_id']));
     }
     $this->likeBack();
     $this->rt['status'] = 'ok';
@@ -58,11 +60,13 @@ private function likeBack(){
   if (empty($tmp))
     return false;
   $sql = "SELECT * FROM `like_both` WHERE (`u1` = ? AND `u2` = ?) OR (`u1` = ? AND `u2` = ?)";
-  $tmp = $this->execSelect($sql, array($this->parsedBody['liked_id'], $this->parsedBody['id'], $this->parsedBody['liked_id'], $this->parsedBody['id']));
+  $tmp = $this->execSelect($sql, array($this->parsedBody['liked_id'], $this->parsedBody['id'],
+                            $this->parsedBody['liked_id'], $this->parsedBody['id']));
   if (!empty($tmp))
     return true;
   $sql = "INSERT INTO `like_both` (`u1`, `u2`) VALUES(?, ?)";
   $this->execUpdateInsert($sql, array($this->parsedBody['liked_id'], $this->parsedBody['id']));
+  $this->rt['mutual'] = true;
 }
 
 }

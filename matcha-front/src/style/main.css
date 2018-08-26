@@ -28,6 +28,53 @@
   overflow: hidden;
 }
 
+.noti-popup {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4.1em;
+  background-color: #fff;
+  box-shadow: 1px 1px 5px rgba(29,29,29,0.7);
+  /* transition: 300ms; */
+  animation: popup 3s forwards;
+  z-index: 14;
+}
+.noti-popup p {
+  margin-top: 1.1em;
+  padding-left: 4.5em;
+  max-width: 70%;
+  line-height: .4em;
+  text-shadow: none;
+}
+
+.popup-u-thumb {
+  position: absolute;
+  width:  3em;
+  height: 3em;
+  top: 0.55em;
+  left: 0;
+  margin-left: 0.9em;
+  /* margin: 4.1vw; */
+  border-color: #292929;
+  border-style: solid;
+  border-radius: 360px;
+  border-width: 1px;
+  background-color: #eee;
+}
+.popup-open {
+  position: absolute;
+  top: 0.8em;
+  right: 1em;
+  color: #2386c8;
+}
+
+@keyframes popup {
+  0% {top: -6em}
+  10% {top: 0em;}
+  90% {top: 0em;}
+  100% {top: -6em;}
+}
 
 
 .preloader-div {
@@ -81,10 +128,11 @@
   max-width: 450px;
   /* text-align: center; */
   padding: 7px;
-  background-color: rgba(250,250,250,0.95);
+  background-color: rgba(250,250,250,0.9);
   border-radius: 7px;
   box-shadow: 1px 1px 57px rgba(29,29,29,0.3);
   transition: 0.6s;
+  opacity: 0.95;
 }
 .Register {
   position: absolute;
@@ -107,20 +155,36 @@
   transition: 0.8s;
 }
 .welcome-bg {
+  display: inline;
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: url('../assets/bg/beach-lovers.jpg') no-repeat center;
+  /* background: url('../assets/bg/beach-lovers.jpg') no-repeat center; */
   /* -webkit-filter: blur(5px);
   -moz-filter: blur(5px);
   -o-filter: blur(5px);
   -ms-filter: blur(5px); */
-  filter: blur(3px);
+  /* filter: blur(3px); */
   background-size: cover;
   overflow-x: scroll;
 }
+
+.video {
+  position: fixed;
+  top: 0em;
+  bottom: 0;
+  
+  height: 100vh;
+  overflow: hidden;
+  /* -webkit-filter: blur(5px);
+  -moz-filter: blur(5px);
+  -o-filter: blur(5px);
+  -ms-filter: blur(5px);
+  filter: blur(2px); */
+}
+
 .login-alert {
   position: relative!important;
   margin-top: .5em;
@@ -236,7 +300,6 @@
   position: absolute;
   left: 15%;
   right: 15%;
-  top: 0;
   width: 70%;
   height: 0.1em;
   margin: 0;
@@ -362,7 +425,7 @@
   border-bottom: 1px;
   border-color: #ddd;
   border-style: solid;
-  z-index: 3;
+  z-index: 16;
 }
 
 .menu-nav-new i {
@@ -413,7 +476,7 @@
   height: 100%;
   background-color: rgb(255, 255, 255);
   overflow-x: scroll;
-  z-index: 2
+  z-index: 15;
 }
 
 .noti-panel-cnt {
@@ -567,6 +630,8 @@ img.usr-thumb-pic-sm {
   top: 0.5em;
   width: 4em;
   height: 4em;
+  border-radius: 100px;
+  border: 1px solid #333;
 }
 span.message-prev {
   width: 100%;

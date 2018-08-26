@@ -38,6 +38,10 @@ class LoginController extends BasicToken {
         $this->rt['status'] = 'ko';
         $this->rt['error'] = 'no user';
         return false;
+    } else if ($row['active'] == 0){
+     $this->rt['status'] = 'ko';
+     $this->rt['error'] = 'no activation';
+     return false;
     }
     if ($row['active'] == 0){
       $this->rt['status'] = 'ko';

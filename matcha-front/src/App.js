@@ -3,12 +3,19 @@ import { Router, browserHistory, Route, Link } from 'react-router';
 import createReactClass from 'create-react-class';
 import logo from './logo.svg';
 import './App.css';
+import { PostData } from './service/post';
 
 import LoginForm from './auth/login.js';
 // import RegisterForm from './auth/register';
 import Welcome from './view/welcome';
 import Main from './view/main';
 import { Redirect } from 'react-router';
+import { Messages } from './view/main';
+
+import { config } from "./service/firebaseConfig";
+import firebase from "firebase";
+import { initializePush } from './service/ini';
+firebase.initializeApp(config);
 
 const LoginHeader = ({ title }) => (
   <div className="welcome-signin posa full" id='header'>
@@ -19,7 +26,11 @@ const LoginHeader = ({ title }) => (
 
 const Home = (props) => (
   <div>
-  <div className="welcome-bg"></div>
+  <div className="welcome-bg">
+  <video autoPlay muted loop className="video">
+    <source src="/FunataFair.mp4" type="video/mp4" />
+  </video>
+  </div>
   <div>
     <LoginHeader />
     {props.login ? <LoginForm /> : <Welcome />}
@@ -39,7 +50,11 @@ const Home = (props) => (
 
 const Login = (props) => (
   <div>
-  <div className="welcome-bg"></div>
+  <div className="welcome-bg">
+  <video autoPlay muted loop className="video">
+    <source src="/FunataFair.mp4" type="video/mp4" />
+  </video>
+  </div>
   <div>
     <LoginHeader />
     <LoginForm />
@@ -105,8 +120,32 @@ class App extends Component {
     super();
     this.state = {
       login: false,
+      notification: false
     };
     App._loginCall = App._loginCall.bind(this);
+    this._callNotif = this._callNotif.bind(this);
+    this.conn = new WebSocket('ws://localhost:8200?id=' + localStorage.getItem('uid'));
+    this.conn.onmessage = (e) => {    
+        if (Messages.returnChatid()) {       
+          this._callNotif(e.data);
+        }
+    };
+  }
+
+  async componentWillMount() {
+    initializePush();
+    // await PostData('myprofile', this.state).then((result) => {
+    //   let responseJson = result;
+    //   if (responseJson && localStorage.getItem('udata') && localStorage.getItem('uname')) {
+    //       var a = responseJson;
+    //       if (a.status === "ko" ) {
+    //         localStorage.removeItem('uname');
+    //         localStorage.removeItem('udata');
+    //         localStorage.removeItem('uava');
+    //         window.location = '/';
+    //       }
+    //   }
+    // });
   }
 
   static _loginCall(a) {
@@ -117,6 +156,42 @@ class App extends Component {
       this.setState({login: false});
       browserHistory.push('/');
     }
+  }
+  async _openChat(chatid, id, ava, name) {
+    await Messages.setChatid(chatid, id, ava, name);
+    setTimeout(
+        function() {
+            Main.callMessages(1);
+        }
+        .bind(this),
+        500
+      );
+    // await Main.showProfile(-42);
+    // 
+    
+}
+//   async _openChat(id, ava, name) {
+//     await Messages.setChatid(-42, id, ava, name);
+//     setTimeout(
+//         function() {
+//             Main.callMessages(1);
+//         }
+//         .bind(this),
+//         500
+//       );
+//     // await Main.showProfile(-42);
+//     // 
+// }
+
+  async _callNotif(a) {
+    await this.setState({notification: JSON.parse(a)});
+    setTimeout(
+      function() {
+        this.setState({notification: false});
+      }
+      .bind(this),
+      4000
+    );
   }
 
   loggedIn() {
@@ -136,17 +211,24 @@ class App extends Component {
     //   );
     // } else {
       return (
-        <Router history={browserHistory}>
-          <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
-          {/* <Route exact path="/login" component={LoginRoute}/> */}
-
-          {/* <Route path="/login" component={Login}/> */}
-          {/* <Route path="/register" component={Register}/> */}
-          {/* <Route path="/users" component={allUsers}/>
-          <Route path="/user" component={allUsers}/>
-          <Route path="/:username" component={User}/> */}
-          {/* <Route component={Main} /> */}
-        </Router>
+        <div>
+          <div className='noti-popup' style={{display: this.state.notification ? 'block' : 'none'}}>
+            <img className='popup-u-thumb' src={'/Matcha/uploads/' + this.state.notification.s_ava} alt=''/>
+            <p>New Message</p><p><b>{ this.state.notification.s_name }</b>: { this.state.notification.message } </p>
+            <p className='popup-open' onClick={() => this._openChat(this.state.notification.chatid, this.state.notification.sender, this.state.notification.s_ava, this.state.notification.s_name)}>open</p>
+          </div>
+          <Router history={browserHistory}>
+            {/* <Route exact path='/push'component={Push}/> */}
+            <Route exact path="*" component={() => <SetRoute login={this.state.login} />} />
+            {/* <Route exact path="/login" component={LoginRoute}/> */}
+            {/* <Route path="/login" component={Login}/> */}
+            {/* <Route path="/register" component={Register}/> */}
+            {/* <Route path="/users" component={allUsers}/>
+            <Route path="/user" component={allUsers}/>
+            <Route path="/:username" component={User}/> */}
+            {/* <Route component={Main} /> */}
+          </Router>
+        </div>
       );
     // }
   }

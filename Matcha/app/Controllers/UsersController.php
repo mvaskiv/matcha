@@ -9,6 +9,7 @@ class UsersController extends BasicToken {
   private $rt = array();
   private $parsedBody;
   protected $conn;
+  private $lol = array();
 
   protected function init(){
     $var = require_once 'sqlconf.php';
@@ -19,10 +20,10 @@ class UsersController extends BasicToken {
   public function insert($request, $response){
     $this->parsedBody = $request->getParsedBody();
     $this->init();
-
-    if (!isset($this->parsedBody['sort']) || !isset($this->parsedBody['start']) || !isset($this->parsedBody['number'])){
+    if (!isset($this->parsedBody['sort']) || !isset($this->parsedBody['start']) || !isset($this->parsedBody['number'])
+        || !isset($this->parsedBody['id'])){
       $this->rt['status'] = 'ko';
-      $this->rt['error'] = 'no sort or start or number';
+      $this->rt['error'] = 'no sort or start or number or id';
       return json_encode($this->rt);
     }
     if ($this->parsedBody['sort'] == 'age' && (!isset($this->parsedBody['start_age']) || !isset($this->parsedBody['end_age']))){
@@ -38,6 +39,19 @@ class UsersController extends BasicToken {
     if ($this->parsedBody['sort'] == 'age_gender' && (!isset($this->parsedBody['gender']) || !isset($this->parsedBody['start_age']) || !isset($this->parsedBody['end_age']))){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'no gender or start_age or end_age';
+      return json_encode($this->rt);
+    }
+    if ($this->parsedBody['sort'] == 'tags' && !isset($this->parsedBody['param'])){
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no param';
+      return json_encode($this->rt);
+    }
+    if ($this->parsedBody['sort'] == 'all' && (!isset($this->parsedBody['gender']) ||
+          !isset($this->parsedBody['start_age']) || !isset($this->parsedBody['end_age']) ||
+        !isset($this->parsedBody['start_rate']) || !isset($this->parsedBody['end_rate'])
+        || !isset($this->parsedBody['param']))){
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no param for all';
       return json_encode($this->rt);
     }
     $this->exec();
@@ -80,25 +94,158 @@ class UsersController extends BasicToken {
           WHERE TIMESTAMPDIFF(YEAR, `date`, CURDATE()) > $start_age and TIMESTAMPDIFF(YEAR, `date`, CURDATE()) < $end_age
           and `gender` = '$gender'  LIMIT $start, $number");
         }
+      else if ($this->parsedBody['sort'] == 'tags'){
+        $tmp = json_decode($this->parsedBody['param'], true);
+        if (!$tmp){
+          $this->rt['status'] = 'ko';
+          $this->rt['error'] = 'wrong json format';
+          return ;
+        }
+        $count = count($tmp);
+        $sql = "";
+        if ($count < 1){
+          $this->rt['status'] = 'ko';
+          $this->rt['error'] = 'no param in json';
+          return ;
+        }
+        $block = $this->block();
+        //print_r($tmp);
+        if ($count === 1){
+          $tg = $tmp[0];
+          $sql = "SELECT user_id, count(user_id) AS `Count` FROM tags
+           WHERE tags LIKE '$tg' GROUP BY user_id ORDER BY `Count` DESC";
+         } else{
+           $tg = $tmp[0];
+           $sql = "SELECT user_id, count(user_id) AS `Count` FROM tags
+            WHERE tags LIKE '$tg'";
+           for ($i = 1; $i < $count; $i++){
+             $tg2 = $tmp[$i];
+             $sql .= "OR tags LIKE '$tg2'";
+           }
+           $sql .= "GROUP BY user_id ORDER BY `Count` DESC LIMIT $start, $number";
+         }
+         //echo $sql."\n";
+         $stmt = $this->conn->prepare($sql);
+         $stmt->execute([]);
+         while (($row = $stmt->fetch(PDO::FETCH_ASSOC))){
+           $blk = true;
+           //print_r($row);
+           foreach($block as $el){
+             if ($el['blocked'] === $row['user_id']) {
+               $blk = false;
+               $this->parsedBody['number']--;
+             }
+           }
+            if (!$blk)
+              continue ;
+            if ($row['user_id'] == $this->parsedBody['id'])
+              continue;
+           $stt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto, fotos.avatar
+                                         FROM user LEFT JOIN fotos ON fotos.id_user=user.id WHERE user.id = ?");
+            $stt->execute([$row['user_id']]);
+            $rw = $stt->fetch(PDO::FETCH_ASSOC);
+            if (!empty($row))
+               array_push($this->lol, $rw);
+         }
+         $this->rt['data'] = $this->lol;
+         $this->rt['status'] = 'ok';
+         if (($this->parsedBody['number'] > $row_q) || ($this->parsedBody['number'] > count($this->lol))) {
+             $this->rt['status'] = 'dbEnd';
+         }
+         return true;
+      }
+      else if ($this->parsedBody['sort'] == 'fame'){
+        $sql = "SELECT `u2`, count(*) AS `rate` FROM `u_likes` GROUP BY `u2` ORDER BY `rate` DESC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([]);
+        $block = $this->block();
+        while (($row = $stmt->fetch(PDO::FETCH_ASSOC))){
+          $blk = true;
+          //print_r($row);
+          foreach($block as $el){
+            if ($el['blocked'] === $row['u2']) {
+              $blk = false;
+              $this->parsedBody['number']--;
+            }
+          }
+           if (!$blk)
+             continue ;
+           if ($row['u2'] == $this->parsedBody['id'])
+             continue;
+          $stt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, fotos.all_foto, fotos.avatar
+                                        FROM user LEFT JOIN fotos ON fotos.id_user=user.id WHERE user.id = ?");
+           $stt->execute([$row['u2']]);
+           $rw = $stt->fetch(PDO::FETCH_ASSOC);
+           if (!empty($row))
+              array_push($this->lol, $rw);
+        }
+        $this->rt['data'] = $this->lol;
+        $this->rt['status'] = 'ok';
+        if (($this->parsedBody['number'] > $row_q) || ($this->parsedBody['number'] > count($this->lol))) {
+            $this->rt['status'] = 'dbEnd';
+        }
+        return true;
+      }
+      else if ($this->parsedBody['sort'] == 'all'){
+        $start_age = $this->parsedBody['start_age'];
+        $end_age = $this->parsedBody['end_age'];
+        $start_rate = $this->parsedBody['start_rate'];
+        $end_rate = $this->parsedBody['end_age'];
+        $gender = $this->parsedBody['gender'];
+
+
+          $tmp = json_decode($this->parsedBody['param'], true);
+          if (!$tmp){
+            $this->rt['status'] = 'ko';
+            $this->rt['error'] = 'wrong json format';
+            return ;
+          }
+          $count = count($tmp);
+          $sql = "";
+          if ($count < 1){
+            $this->rt['status'] = 'ko';
+            $this->rt['error'] = 'no param in json';
+            return ;
+          }
+          $block = $this->block();
+          if ($count === 1){
+            $tg = $tmp[0];
+            $sql = "SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender,
+             tags.user_id, count(user_id) AS Count FROM tags JOIN user ON user.id = tags.user_id
+             WHERE tags.tags LIKE '$tg' AND user.rate > $start_rate AND user.rate < $end_rate AND
+             TIMESTAMPDIFF(YEAR, user.date, CURDATE()) > $start_age and TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $end_age
+             AND user.gender = '$gender'
+             GROUP BY tags.user_id ORDER BY `Count` DESC LIMIT $start, $number";
+           } else{
+             $tg = $tmp[0];
+             $sql = "SELECT user.rate, user.f_name, user.l_name, user.u_name, user.id, user.gender,
+              tags.user_id, count(user_id) AS Count FROM tags JOIN user ON user.id = tags.user_id
+              WHERE (tags.tags LIKE '$tg'";
+             for ($i = 1; $i < $count; $i++){
+               $tg2 = $tmp[$i];
+               $sql .= " OR tags.tags LIKE '$tg2'";
+             }
+             $sql .= ") AND user.rate > $start_rate AND user.rate < $end_rate AND
+             TIMESTAMPDIFF(YEAR, user.date, CURDATE()) > $start_age and TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $end_age
+             AND user.gender = '$gender'
+             GROUP BY tags.user_id ORDER BY `Count` DESC LIMIT $start, $number";
+           }
+           $stmt = $this->conn->prepare($sql);
+      }
       else {
         $this->rt['status'] = 'ko';
         $this->rt['error'] = 'sort error';
         return ;
       }
-    if ($stmt->execute()){
+    if ($stmt->execute([])){
       $block = $this->block();
-      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+      while (($row = $stmt->fetch(PDO::FETCH_ASSOC))){
         $blk = true;
-        if (!empty($row['all_foto'] && !empty($row['avatar']))){
-          $tmp = unserialize($row['all_foto']);
-          if (isset($tmp[inval($row['avatar'])]))
-            $row['avatar'] = $tmp[inval($row['avatar'])];
-          }
-          else
-            $row['avatar'] = 'error';
         foreach($block as $el){
-          if ($el['blocked'] === $row['id'])
+          if ($el['blocked'] === $row['id']) {
             $blk = false;
+            $this->parsedBody['number']--;
+          }
         }
         unset($row['all_foto']);
         if ($blk)
@@ -111,13 +258,11 @@ class UsersController extends BasicToken {
         $this->rt['status'] = 'dbEnd';
     }
   return true;
-}
-
+  }
   public function block(){
     $stmt = $this->conn->prepare("SELECT * FROM `black_list` WHERE id = ?");
     $stmt->execute([$this->parsedBody['id']]);
     $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
     return ($row);
   }
-
 }

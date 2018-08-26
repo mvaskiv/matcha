@@ -58,6 +58,10 @@ $container['blockUserController'] = function($container){
   return new \App\Controllers\blockUserController;
 };
 
+$container['LikedUsers'] = function($container){
+  return new \App\Controllers\LikedUsers;
+};
+
 $container['LikeController'] = function($container){
   return new \App\Controllers\LikeController;
 };
@@ -76,6 +80,14 @@ $container['UpdateUserController'] = function($container){
 
 $container['BothLikeController'] = function($container){
   return new \App\Controllers\BothLikeController;
+};
+
+$container['UpdateUserController'] = function($container){
+  return new \App\Controllers\UpdateUserController;
+};
+
+$container['NotificationController'] = function($container){
+  return new \App\Controllers\NotificationController;
 };
 
 require_once __DIR__.'/../app/routes.php';

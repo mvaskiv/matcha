@@ -23,6 +23,8 @@ public function insert($request, $response){
   $this->init();
   $this->execUpdateInsert("INSERT INTO `black_list` (`id`, `blocked`) VALUES(?, ?)",
               array($this->parsedBody['id'], $this->parsedBody['blocked']));
+  $this->rt['status'] = 'ok';
+  return json_encode($this->rt);
 }
 
 

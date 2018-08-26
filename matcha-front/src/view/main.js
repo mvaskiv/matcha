@@ -42,12 +42,26 @@ const UserThumbList = (props) => {
     var userava = props.data['avatar'];    
     var src = usergen === "M" ? "https://randomuser.me/api/portraits/med/men/" + userid + ".jpg" : "https://randomuser.me/api/portraits/med/women/" + userid + ".jpg";
 
-    return (
-        <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(userid)}>
-            <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
-            <p className='u-thumb-list-name'> { username } { surname } </p>
-        </div>
-    );
+    if (props.match) {
+        var r = new RegExp(props.match, 'i');
+            if (username.match(r)) {
+                return (
+                    <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(-42, userid, userava, username)}>
+                        <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
+                        <p className='u-thumb-list-name'> { username } { surname } </p>
+                    </div>
+                );
+            } else {
+                return null;
+            }
+        } else {
+        return (
+            <div className='u-thumb-list-wrapper' onClick={() => Messages.setChatid(-42, userid, userava, username)}>
+                <img className='user-xs-avatar' key={this} alt={ username } src={ userava ? 'Matcha/uploads/' + userava : src } />
+                <p className='u-thumb-list-name'> { username } { surname } </p>
+            </div>
+        );
+    }
 }
 
 class BrowseUsers extends Component {
@@ -55,17 +69,23 @@ class BrowseUsers extends Component {
         super(props);
         this.state = {
             dbEnd: false,
+            id: false,
             uid: '',
             users: '',
+           
             sort: 'age',
             gender: false,
             start_age: 9,
             end_age: 99,
-            start: '0',
+            start: 0,
             number: 21
         }
         this._onScroll = this._onScroll.bind(this);
         this._scrollListener = this._scrollListener.bind(this);
+    }
+
+    async componentWillMount() {
+        await this.setState({id: localStorage.getItem('uid')});
     }
 
     componentDidMount() {
@@ -84,11 +104,13 @@ class BrowseUsers extends Component {
     }
 
     componentDidUpdate() {
-        this.ulist.addEventListener('scroll', this._scrollListener);
+        if (this.ulist) {
+            this.ulist.addEventListener('scroll', this._scrollListener);
+        }
     }
 
     componentWillUnmount() {
-        window.removeEventListener('scroll', this.onScroll, false);
+        window.removeEventListener('scroll', this._onScroll, false);
     }
 
     _scrollListener() {
@@ -100,9 +122,11 @@ class BrowseUsers extends Component {
     async _onScroll() {
         var n = this.state.number + 21;
         await this.setState({number: n});
+        console.warn('sent');
         PostData('users', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
+                console.warn(responseJson);
                 var a = responseJson.data;
                 this.setState({users: a});
                 if (responseJson.status === 'dbEnd') {
@@ -286,11 +310,7 @@ class SearchPanel extends Component {
     }
 
     _sliderChange(e) {
-        // if (e.target.name === 'age_u' && e.target.value > this.state.age_l) {
-            this.setState({[e.target.name]:e.target.value});            
-        // } else if (e.target.name === 'age_l' && e.target.value > this.state.age_l) {
-        //     this.setState({[e.target.name]:e.target.value});                        
-        // } 
+        this.setState({[e.target.name]:e.target.value});    
     }
 
     render () {
@@ -355,24 +375,28 @@ class Notifications extends Main {
 }
 
 const MessagePreview = (props) => {
-    var username = props.data[0];
-    var chatid = props.data[1];
-    var previewText = props.data[2];
+    var username = props.data.data.f_name;
+    var chatid = props.data.id;
+    var ava = props.data.data.avatar;
+    var myid = localStorage.getItem('uid');
+    var mateid = props.data.user1 === myid ? props.data.user2 : props.data.user1;
+
+    // var previewText = props.data[2];
     return (
-        <li key={this} onClick={() => Messages.setChatid(chatid)}>
+        <li key={this} onClick={() => Messages.setChatid(chatid, mateid, ava, username)}>
             <div className="message-header">
                 <div className="usr-thumb-sm">
-                    <img className='usr-thumb-pic-sm' alt='' src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxOenGWBAWe8eQudov0SaTXTG4_H3rqQcWBpgGOTjjm8-9ppEO' />
+                    <img className='usr-thumb-pic-sm' alt='' src={props.data.data.avatar ? '/Matcha/uploads/' + props.data.data.avatar : '/Matcha/uploads/avatar-placeholder.png'}/>
                 </div>
                 <div className="message-prev" onClick={() => Messages.setChatid( chatid )}>
-                    <span className='message-prev'><b>{ username }</b><br />{ previewText }</span>
+                    <span className='message-prev'><b>{ username }</b><br /> Click to open </span>
                 </div>
             </div>
         </li>
     );
 }
 
-class Messages extends Main {
+export class Messages extends Main {
     constructor() {
         super();
         this.state = {
@@ -380,11 +404,13 @@ class Messages extends Main {
             id: localStorage.getItem('uid'),
             chats: false,
             chatid: '',
+            mate: '',
             new: false
         }
         Messages.resetChat = Messages.resetChat.bind(this);
         Messages.setChatid = Messages.setChatid.bind(this);
         Messages.backToMessages = Messages.backToMessages.bind(this);
+        Messages.returnChatid = Messages.returnChatid.bind(this);
     }
 
     componentDidMount() {
@@ -402,13 +428,30 @@ class Messages extends Main {
         });
     }
 
+    static returnChatid() {
+        if (this.state && this.state.chatid) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     static resetChat () {
         this.setState({chatid: ''});
         // this.setState({new: false});
     }
 
-    static setChatid(a) {
-        this.setState({chatid: a});
+    static setChatid(chat, user, ava, username) {
+        if (chat === -42) {
+            this.state.chats.forEach(c => {
+                if (c.user1 === user || c.user2 === user) {
+                    this.setState({chatid: c.id});
+                    return ;
+                }
+            });
+        }
+        this.setState({chatid: chat});
+        this.setState({mate: {f_name: username, avatar: ava, id: user}});
         // this.setState({new: false});
     }
 
@@ -418,11 +461,19 @@ class Messages extends Main {
     }
 
     render () {
-        var messages = [['Mike', '103', 'Hey, how are you?'], ['John', '2', 'Hello sweetie'], ['Vasya', '3', 'You stole my heart...']];        
+        // var messages = [['Mike', '103', 'Hey, how are you?'], ['John', '2', 'Hello sweetie'], ['Vasya', '3', 'You stole my heart...']];        
+        const chatmap = this.state.chats ? this.state.chats.map((chat, i) => {
+            return (
+                <MessagePreview
+                    key={i}
+                    data={chat} />
+            );
+        }) : null;
         if (this.state.chatid) {
             return (
                 <Chat
-                    id={this.state.chatid} />
+                    id={this.state.chatid}
+                    mate={this.state.mate} />
             );
         } else if (this.state.new) {
             return <NewMessage />
@@ -435,13 +486,7 @@ class Messages extends Main {
                         <h4 className='menu-head'>Messages</h4>
                     </div>
                     <ul>
-                        {messages.map(function(user, i) {
-                            return (
-                                <MessagePreview
-                                    key={i}
-                                    data={user} />
-                            );
-                        })}
+                        { chatmap }
                     </ul>
                 </div>
             );
@@ -453,6 +498,8 @@ class NewMessage extends Messages {
     constructor(props) {
         super(props);
         this.state = {
+            token: localStorage.getItem('udata'),
+            id: false,
             loaded: false,
             testsearch: false,
             users: false,
@@ -462,11 +509,16 @@ class NewMessage extends Messages {
             start_age: 9,
             end_age: 99,
             start: 0,
-            number: 15
+            number: 15,
+            search: '',
         }
         this._getAvailableUsers = this._getAvailableUsers.bind(this);
         this._scrollListener = this._scrollListener.bind(this);        
     };
+
+    async componentWillMount() {
+        await this.setState({id: localStorage.getItem('uid')});
+    }
 
     async componentDidMount() {
         await this._getAvailableUsers();
@@ -484,7 +536,7 @@ class NewMessage extends Messages {
     }
 
     async _getAvailableUsers() {
-        await PostData('users', this.state).then((result) => {
+        await PostData('getchatmates', this.state).then((result) => {
             let responseJson = result;
             if (responseJson) {
                 var a = responseJson.data;
@@ -516,6 +568,14 @@ class NewMessage extends Messages {
         });
     }
 
+    onChange = (e) => {
+        this.setState({search: e.target.value});
+    }
+
+    _resetSearch() {
+        this.setState({search: ''});
+    }
+
     render() {
         if (!this.state.loaded) {
             return (
@@ -528,11 +588,13 @@ class NewMessage extends Messages {
                         </div>
                         <div>
                             <div className='form-element-group chat-search-input'>
-                                <input
+                            <input
                                     type='text'
                                     className='form-element search-in'
+                                    value={ this.state.search }
+                                    onChange={this.onChange}
                                     placeholder='Search' />
-                                <span onClick={() => this.testMessage()} className='form-element-extra search-snd-btn'><i className="fas fa-search"></i></span>
+                                <span onClick={ this._resetSearch } className='form-element-extra search-snd-btn'><i className={ this.state.search ? 'far fa-times-circle' : 'fas fa-search' }></i></span>
                             </div>
                         </div>
                     </div>
@@ -545,7 +607,7 @@ class NewMessage extends Messages {
                 var userlist = this.state.users.map((user, i) => {
                     if (user.id !== localStorage.getItem('uid')) {
                         return (
-                            <UserThumbList key={i} data={ user } />
+                            <UserThumbList key={i} data={ user } match={ this.state.search } />
                         );
                     }
                 });
@@ -564,8 +626,10 @@ class NewMessage extends Messages {
                                 <input
                                     type='text'
                                     className='form-element search-in'
+                                    value={ this.state.search }
+                                    onChange={this.onChange}
                                     placeholder='Search' />
-                                <span onClick={() => this.testMessage()} className='form-element-extra search-snd-btn'><i className="fas fa-search"></i></span>
+                                <span onClick={ this._resetSearch } className='form-element-extra search-snd-btn'><i className={ this.state.search ? 'far fa-times-circle' : 'fas fa-search' }></i></span>
                             </div>
                         </div>
                     </div>
@@ -586,22 +650,32 @@ class Chat extends Messages {
         this.state = {
             token: localStorage.getItem('udata'),
             id: localStorage.getItem('uid'),
+            chatId: false,
             viewId: false,
             focus: false,
             updated: false,
             data: false,
+            fbtoken: '',
+            start: 0,
+            number: 150,
             newMessage: '',
             messages: [['Hey', '0']]
         }
+        this._onScroll = this._onScroll.bind(this);
+        this._scrollListener = this._scrollListener.bind(this);
         this.testMessage = this._sendMesssage.bind(this);
         this.InputOnFocus = this.InputOnFocus.bind(this);
         this.onChange = this.onChange.bind(this);
         this._getInfo = this._getInfo.bind(this);
         this.changeView = this.changeView.bind(this);
+        this._getFbToken = this._getFbToken.bind(this);
+        this._sendFireNoti = this._sendFireNoti.bind(this);
         this.conn = new WebSocket('ws://localhost:8200?id=' + localStorage.getItem('uid'));
         this.conn.onmessage = (e) => {
-            console.log(e.data);            
             this._msgReceived(e.data);
+            if (this.msglst.lastChild) {
+                this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+            }
         };
     }
 
@@ -609,7 +683,7 @@ class Chat extends Messages {
         var str = JSON.parse(e);
         // console.log(str.message);
         if (str.message) {
-            await this.state.messages.push([str.message, str.sender]);
+            await this.state.messages.push({msg: str.message, sender: str.sender});
         } else if (str.message && str.status !== "ok") {
             alert ("Ooops, something's gone wrong. Please, try again.");
         }
@@ -618,40 +692,79 @@ class Chat extends Messages {
 
     changeView() {
         this.setState({viewId: this.props.id});
+        this.setState({data: this.props.mate});
     }
 
     async _getInfo() {
         await this.changeView();
-        PostData('myprofile', this.state).then((result) => {
+        PostData('msghistory', this.state).then((result) => {
             let responseJson = result;
-            if (responseJson) {
-                var a = responseJson[0];
-                this.setState({data: a});
+            if (responseJson.data) {
+                var a = responseJson.data;
+                this.setState({messages: a});
             }
         });
+        this._getFbToken();
+    }
+
+    _getFbToken() {
+        if (this.state.data) {
+            var state = {id: this.state.data.id, action: 'get'};
+            PostData('fbtoken', state).then((result) => {
+                let responseJson = result;
+                if (responseJson.data) {
+                    console.log('mates token: ' + responseJson.data);
+                    this.setState({fbtoken: responseJson.data});
+                }
+            });
+        }
     }
 
     componentDidMount() {
-        // this.msglst.lastChild.scrollIntoView(!0);
+        if (this.msglst.lastChild) {this.msglst.lastChild.scrollIntoView(!0);}
         if (this.props.id && (this.props.id !== this.state.viewId)) {
             this._getInfo();
         }
         this.conn.onopen = function(e) {
             console.log("Connection established!");
         };
-        
+        this.setState({interval: setInterval(this._getInfo, 1500)});
     }
 
+    // SOME SAVAGE SHIT RIGHT HERE [up] [down]
+
+    componentWillUnmount() {
+        clearInterval(this.state.interval);
+    }
     componentDidUpdate() {
         if (this.props.id && (this.props.id !== this.state.viewId)) {
             this._getInfo();
         }
-        if (this.msglst) {
+        if (this.msglst.lastChild) {
             this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        }
+        if (this.msglstc) {
+            this.msglstc.addEventListener('scroll', this._scrollListener);
         }
         // if (this.state.updated) {
         //     this.setState({updated: false});
         // }
+    }
+
+    _scrollListener() {
+        console.log(this.msglstc.scrollTop);
+        console.log(this.msglstc.clientHeight);
+        console.log(this.msglstc.scrollHeight);
+        // if (this.msglstc.scrollTop <= 10) {
+        //     console.log('scroll');
+        //     this._onScroll();
+        // }
+    }
+
+    async _onScroll() {
+        var n = this.state.number + 15;
+        await this.setState({number: n});
+        this._getInfo();
     }
 
     onChange(e) {
@@ -662,6 +775,10 @@ class Chat extends Messages {
         await PostData('send', msg).then((result) => {
             let responseJson = result;
             if (responseJson.status === 'ok') {
+                if (responseJson.id !== this.state.viewId) {
+                    console.log(responseJson.id);
+                    Messages.setChatid(responseJson.id, this.props.mate.id, this.props.mate.avatar, this.props.mate.f_name);
+                }
                 return true;
             } else {
                 return false;
@@ -669,33 +786,71 @@ class Chat extends Messages {
         });
     }
 
+    _sendFireNoti(data) {
+        let URL = 'https://fcm.googleapis.com/fcm/send';
+        if (this.state.fbtoken) {
+            return new Promise((resolve, reject) => {
+                fetch(URL, {
+                    method: 'POST',
+                    // mode: 'no-cors',
+                    headers: {
+                        Authorization: 'key=AAAACPgZpn8:APA91bETKxCnDptt0ej0AHyX9fARyBzRf5jlkaOJvWkE9xfisPJ0906GLmfLszuDXaLTF-0Go9fM30YtLRW7MJ-X7H5x6L2wGjM15AHlZLTn-iQvKy0WI7_h1dqSxC-OiqpgfqzgCoCCucCjwdozH3xFOr49dDaJ-g',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({token: localStorage.getItem('firebaseToken'), to: this.state.fbtoken, priority: 'high', notification: {body: data}})
+                })
+                .then((response) => response.json())
+                .then((res) => {
+                    console.log(res);
+                    resolve(res);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+            });
+        }
+    }
+    
+
     async _sendMesssage() {
         if (this.state.newMessage) {
-            var message = {message: this.state.newMessage, sender: localStorage.getItem('uid')};
-            var messageState = {status: 'msg', to: this.state.viewId, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
+            var message = {message: this.state.newMessage, sender: localStorage.getItem('uid'), s_name: localStorage.getItem('uname'), s_ava: localStorage.getItem('uava'), chatid: this.state.viewId};
+            var messageState = {status: 'msg', to: this.state.data.id, token: localStorage.getItem('udata'), id: localStorage.getItem('uid'), msg: JSON.stringify(message)};
             if (this._msgToDb(messageState)) {
-                this.conn.send(JSON.stringify(messageState));
-                if (this.state.id !== this.state.viewId) {this.state.messages.push([this.state.newMessage, localStorage.getItem('uid')]);}
+                this._sendFireNoti(localStorage.getItem('uname') + ": " + this.state.newMessage);
+                // this.conn.send(JSON.stringify(messageState));
+                // this._getInfo();
+                this.state.messages.push({msg: this.state.newMessage, sender: this.state.id});
                 this.setState({newMessage: ''});
             }
         }
+    }
+
+    _getMsgTime(t) {
+        if (t) {
+            var s = t.split(" ");
+            var x = s[1].split(":");
+            return x[0] + ":" + x[1];
+        }        
     }
 
     InputOnFocus(a) {
         // // Main.hideMenuBar(a);
         if (a === 1) {this.setState({focus: true});}
         else {this.setState({focus: false});}
-        this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        if (this.msglst.lastChild) {
+            this.msglst.lastChild.scrollIntoView({behavior: 'smooth'});
+        }
     }
 
     render () {
         var myid = localStorage.getItem('uid');
-
-        var display = this.state.messages.map((message) => {
+        var display =  this.props.id === -42 ? null : this.state.messages.map((message, i) => {
+            var timestamp = this._getMsgTime(message.date);
             return (
-                <li className='msg-cps'>
-                    <img className='chat-u-thumb' src={this.state.data.avatar ? '/Matcha/uploads/' + this.state.data.avatar : 'Matcha/uploads/avatar-placeholder.png'} style={{ display: message[1] === myid ? 'none' : 'block' }}/>
-                    <p className={(message[1] === myid ? 'sent-message btn' : 'received-message btn')}>{message[0]}<span className={(message[1] === myid ? 'msg-time-r' : 'msg-time-l')}>22:00</span></p>
+                <li className='msg-cps' key={i}>
+                    <img className='chat-u-thumb' src={this.state.data.avatar ? '/Matcha/uploads/' + this.state.data.avatar : 'Matcha/uploads/avatar-placeholder.png'} style={{ display: message.sender === myid ? 'none' : 'block' }}/>
+                    <p className={(message.sender === myid ? 'sent-message btn' : 'received-message btn')}>{message.msg}<span className={(message.sender === myid ? 'msg-time-r' : 'msg-time-l')}>{ timestamp }</span></p>
                 </li>
             );
         })
@@ -710,7 +865,7 @@ class Chat extends Messages {
                         <a href="#new-message"><i onClick={() => Messages.resetChat()} className="fas fa-plus flr"></i></a>
                         <h4 className='menu-head'> { username } </h4>
                     </div>
-                    <div className='chat-self'>
+                    <div className='chat-self' ref={msglstc => {this.msglstc = msglstc;}}>
                         <ul ref={msglst => {this.msglst = msglst;}}>
                             { display }
                         </ul>
@@ -740,6 +895,7 @@ class UserProfile extends Main {
             token: localStorage.getItem('udata'),
             id: localStorage.getItem('uid'),
             viewId: '',
+            liked_id: '',
             data: ''
         }
     }
@@ -768,6 +924,23 @@ class UserProfile extends Main {
         });
     }
 
+    async _like() {
+        await this.setState({liked_id: this.state.viewId});
+        PostData('like', this.state).then((result) => {
+            let responseJson = result;
+            if (responseJson.status === 'ok') {
+                if (responseJson.mutual) {
+                    alert('You liked each other, nice!');
+                    return ;
+                }
+                alert('Liked');
+                return ;
+            } else {
+                alert('Ooops, server side error, please try again.');
+            }
+        })
+    }
+
     _userAge(d) {
         var dD = new Date(d);
         var aD = Date.now() - dD.getTime();
@@ -775,10 +948,31 @@ class UserProfile extends Main {
         return Math.abs(aT.getUTCFullYear() - 1970);
     }
 
-    _openChat(id) {
-        // Messages.setChatid(id);
-        // Main.showProfile(-42);
-        // Main.callMessages(0);
+    async _openChat(id, ava, name) {
+        await Messages.setChatid(-42, id, ava, name);
+        setTimeout(
+            function() {
+                Main.callMessages(1);
+            }
+            .bind(this),
+            500
+          );
+    }
+
+    _blockTheFucker = () => {
+        let toBlock = {
+            id: this.state.id,
+            token: this.state.token,
+            blocked: this.state.data.id,
+        }
+        PostData('bladd', toBlock).then((result) => {
+            let responseJson = result;
+            if (responseJson.status === 'ok') {
+                alert('You have successfully blocked this dirty animal.');
+            } else {
+                alert('Oops. server side error, please try again.')
+            }
+        });
     }
 
     render() {
@@ -798,13 +992,15 @@ class UserProfile extends Main {
             <div className='inner-cnt'>
                 <div className='basic-u-info-cnt'>
                     <div className='profile-img'>
-                        <img className='profile-img' src={ src ? src : '/Matcha/uploads/avatar-placeholder.png' } alt=''/>
+                        <img className='profile-img' src={ this.state.data.avatar ? 'Matcha/uploads/' + this.state.data.avatar : src } alt=''/>
                     </div>
                     <div className='basic-u-info'>
                         <h3> { username }, { userage } </h3>
                         <div className='btn-group'>
-                            <button onClick={() => this._openChat(userid)} className='btn btn-default'>Message</button>
-                            <button className='btn btn-default third'><i className="far fa-star"></i></button>
+                            {this.state.data.match ?
+                                <button onClick={() => this._openChat(userid, this.state.data.avatar, username)} className='btn btn-default'>Message</button>
+                                : <button className='btn btn-default' onClick={() => this._like()}><i className={ this.state.data.liked ? 'fas fa-kiss-wink-heart' : 'far fa-kiss-wink-heart'}></i>Like</button>}
+                            <button onClick={this._blockTheFucker} className='btn btn-default third'><i className="fas fa-user-lock"></i></button>
                         </div>
                     </div>
                 </div>
@@ -877,6 +1073,10 @@ class Profile extends Main {
             if (responseJson) {
                 var a = responseJson[0];
                 this.setState({ me: a });
+                if (a && a.f_name && a.avatar) {
+                    localStorage.setItem('uname', a.f_name);
+                    localStorage.setItem('uava', a.avatar);
+                }
             }
         });
         this.setState({update: false});        

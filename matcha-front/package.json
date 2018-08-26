@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "base-64": "^0.1.0",
+    "firebase": "^5.3.1",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "react-file-base64": "^1.0.3",
