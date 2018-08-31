@@ -46,12 +46,20 @@ class UsersController extends BasicToken {
       $this->rt['error'] = 'no param';
       return json_encode($this->rt);
     }
+    //print_r($this->parsedBody);
     if ($this->parsedBody['sort'] == 'all' && (!isset($this->parsedBody['gender']) ||
           !isset($this->parsedBody['start_age']) || !isset($this->parsedBody['end_age']) ||
         !isset($this->parsedBody['start_rate']) || !isset($this->parsedBody['end_rate'])
-        || !isset($this->parsedBody['param']))){
+        || !isset($this->parsedBody['param']) || !isset($this->parsedBody['km']) ||
+      !isset($this->parsedBody['longitude']) || !isset($this->parsedBody['latitude']))){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'no param for all';
+      return json_encode($this->rt);
+    }
+    if ($this->parsedBody['sort'] == 'location' || !isset($this->parsedBody['latitude']) ||
+          !isset($this->parsedBody['longitude']) || !isset($this->parsedBody['km'])){
+      $this->rt['status'] = 'ko';
+      $this->rt['error'] = 'no param for location';
       return json_encode($this->rt);
     }
     $this->exec();
@@ -192,10 +200,14 @@ class UsersController extends BasicToken {
         $start_rate = $this->parsedBody['start_rate'];
         $end_rate = $this->parsedBody['end_age'];
         $gender = $this->parsedBody['gender'];
+        $lon = $this->parsedBody['longitude'];//your longitude
+        $lat = $this->parsedBody['latitude'];//your latitude
+        $miles = $this->parsedBody['km'];
 
 
           $tmp = json_decode($this->parsedBody['param'], true);
           if (!$tmp){
+            goto search_by_rate;
             $this->rt['status'] = 'ko';
             $this->rt['error'] = 'wrong json format';
             return ;
@@ -203,6 +215,7 @@ class UsersController extends BasicToken {
           $count = count($tmp);
           $sql = "";
           if ($count < 1){
+            goto search_by_rate;
             $this->rt['status'] = 'ko';
             $this->rt['error'] = 'no param in json';
             return ;
@@ -210,12 +223,19 @@ class UsersController extends BasicToken {
           $block = $this->block();
           if ($count === 1){
             $tg = $tmp[0];
-            $sql = "SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender,
-             tags.user_id, count(user_id) AS Count FROM tags JOIN user ON user.id = tags.user_id
-             WHERE tags.tags LIKE '$tg' AND user.rate > $start_rate AND user.rate < $end_rate AND
-             TIMESTAMPDIFF(YEAR, user.date, CURDATE()) > $start_age and TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $end_age
+            $sql = "SELECT ( 1.6 * 3959 * acos( cos( radians('$lat') ) *
+            cos( radians( location.latitude ) ) *
+            cos( radians( location.longitude ) -
+            radians('$lon') ) +
+            sin( radians('$lat') ) *
+            sin( radians( location.latitude ) ) ) )
+            AS distance, user.f_name, user.l_name, user.u_name, user.id, user.gender,
+             tags.user_id, count(tags.user_id) AS Count FROM tags JOIN user ON user.id = tags.user_id
+             LEFT JOIN location ON location.user_id=tags.user_id
+             WHERE tags.tags LIKE '$tg' AND user.rate >= $start_rate AND user.rate < $end_rate AND
+             TIMESTAMPDIFF(YEAR, user.date, CURDATE()) >= $start_age and TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $end_age
              AND user.gender = '$gender'
-             GROUP BY tags.user_id ORDER BY `Count` DESC LIMIT $start, $number";
+             GROUP BY tags.user_id having distance < '$miles' ORDER BY `Count` DESC LIMIT $start, $number";
            } else{
              $tg = $tmp[0];
              $sql = "SELECT user.rate, user.f_name, user.l_name, user.u_name, user.id, user.gender,
@@ -231,6 +251,44 @@ class UsersController extends BasicToken {
              GROUP BY tags.user_id ORDER BY `Count` DESC LIMIT $start, $number";
            }
            $stmt = $this->conn->prepare($sql);
+      }
+      else if ($this->parsedBody['sort'] == 'all'){
+        $lon = $this->parsedBody['longitude'];//your longitude
+        $lat = $this->parsedBody['latitude'];//your latitude
+        $miles = $this->parsedBody['km'];//your search radius
+        $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender,
+          ( 1.6 * 3959 * acos( cos( radians('$lat') ) *
+          cos( radians( location.latitude ) ) *
+          cos( radians( location.longitude ) -
+          radians('$lon') ) +
+          sin( radians('$lat') ) *
+          sin( radians( location.latitude ) ) ) )
+          AS distance FROM location JOIN user on user.id = location.user_id LEFT JOIN fotos ON
+          fotos.id_user=location.id HAVING distance < '$miles' ORDER BY distance ASC LIMIT $start, $number");
+      }
+      else if (0){
+        search_by_rate:
+        $this->rt['tags_search'] = 'wrong json';
+        $start_age = $this->parsedBody['start_age'];
+        $end_age = $this->parsedBody['end_age'];
+        $start_rate = $this->parsedBody['start_rate'];
+        $end_rate = $this->parsedBody['end_age'];
+        $gender = $this->parsedBody['gender'];
+        $lon = $this->parsedBody['longitude'];//your longitude
+        $lat = $this->parsedBody['latitude'];//your latitude
+        $miles = $this->parsedBody['km'];//your search radius
+        $stmt = $this->conn->prepare("SELECT user.f_name, user.l_name, user.u_name, user.id, user.gender, user.rate, user.date,
+          ( 1.6 * 3959 * acos( cos( radians('$lat') ) *
+          cos( radians( location.latitude ) ) *
+          cos( radians( location.longitude ) -
+          radians('$lon') ) +
+          sin( radians('$lat') ) *
+          sin( radians( location.latitude ) ) ) )
+          AS distance FROM location JOIN user on user.id = location.user_id LEFT JOIN fotos ON
+          fotos.id_user=location.id HAVING distance < '$miles' AND user.rate >= $start_rate AND user.rate < $end_rate AND
+          TIMESTAMPDIFF(YEAR, user.date, CURDATE()) >= $start_age AND TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $end_age
+          AND user.gender = '$gender'
+           ORDER BY distance ASC LIMIT $start, $number");
       }
       else {
         $this->rt['status'] = 'ko';

@@ -20,7 +20,6 @@ class RegistrationController{
     private $date;
     private $rt = array();
     protected $conn;
-    use \App\Traits\sendMail;
 
     use \App\Traits\sendMail;
 
@@ -82,6 +81,10 @@ class RegistrationController{
      $this->rt['status'] = 'ok';
      $id = $this->conn->lastInsertId();
      $this->insertTags($id);
+     if ($this->parsedBody['latitude'] && $this->parsedBody['longitude']){
+       $stmt = $this->conn->prepare("INSERT INTO `location` (`latitude`, `longitude`, `user_id`) VALUES(?, ?, ?)");
+       $stmt->execute([$this->parsedBody['latitude'], $this->parsedBody['longitude'], $id]);
+     }
      $link = $this->sendActivationMail(array('id' => $id, 'to' => $this->parsedBody['email']));
      $stmt = $this->conn->prepare("UPDATE `user` SET `active_value` = ? WHERE `id` = ?");
      $stmt->execute([$link, $id]);

@@ -59,4 +59,17 @@ protected function sendReinstallMail(array $param){
   return $link;
 }
 
+protected function FakeMail(array $param){
+  $subject = "Fake";
+  $txt = "Hello!\n";
+  $txt .= "Are you fake user?:\n";
+  $this->sendMail(array(
+    'to' => $param['to'],
+    'subject' => $subject,
+    'text' => $txt
+  )
+  );
+  return $link;
+}
+
 }

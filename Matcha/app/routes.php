@@ -28,3 +28,5 @@ $app->post('/chat', function ($request, $response, $args) {
 $app->post('/pushnotification', 'NotificationController:push');
 $app->post('/deletenotification', 'NotificationController:delete');
 $app->post('/selectnotification', 'NotificationController:select');
+
+$app->post('/fakeuser', 'FakeController:insert');

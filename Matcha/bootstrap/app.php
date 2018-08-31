@@ -90,4 +90,8 @@ $container['NotificationController'] = function($container){
   return new \App\Controllers\NotificationController;
 };
 
+$container['FakeController'] = function($container){
+  return new \App\Controllers\FakeController;
+};
+
 require_once __DIR__.'/../app/routes.php';
