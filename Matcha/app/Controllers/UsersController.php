@@ -56,8 +56,8 @@ class UsersController extends BasicToken {
       $this->rt['error'] = 'no param for all';
       return json_encode($this->rt);
     }
-    if ($this->parsedBody['sort'] == 'location' || !isset($this->parsedBody['latitude']) ||
-          !isset($this->parsedBody['longitude']) || !isset($this->parsedBody['km'])){
+    if ($this->parsedBody['sort'] == 'location' && (!isset($this->parsedBody['latitude']) ||
+          !isset($this->parsedBody['longitude']) || !isset($this->parsedBody['km']))){
       $this->rt['status'] = 'ko';
       $this->rt['error'] = 'no param for location';
       return json_encode($this->rt);
@@ -238,7 +238,15 @@ class UsersController extends BasicToken {
              GROUP BY tags.user_id having distance < '$miles' ORDER BY `Count` DESC LIMIT $start, $number";
            } else{
              $tg = $tmp[0];
-             $sql = "SELECT user.rate, user.f_name, user.l_name, user.u_name, user.id, user.gender,
+             $sql = "SELECT
+             ( 1.6 * 3959 * acos( cos( radians('$lat') ) *
+             cos( radians( location.latitude ) ) *
+             cos( radians( location.longitude ) -
+             radians('$lon') ) +
+             sin( radians('$lat') ) *
+             sin( radians( location.latitude ) ) ) )
+             AS distance,
+              user.rate, user.f_name, user.l_name, user.u_name, user.id, user.gender,
               tags.user_id, count(user_id) AS Count FROM tags JOIN user ON user.id = tags.user_id
               WHERE (tags.tags LIKE '$tg'";
              for ($i = 1; $i < $count; $i++){
@@ -248,7 +256,7 @@ class UsersController extends BasicToken {
              $sql .= ") AND user.rate > $start_rate AND user.rate < $end_rate AND
              TIMESTAMPDIFF(YEAR, user.date, CURDATE()) > $start_age and TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $end_age
              AND user.gender = '$gender'
-             GROUP BY tags.user_id ORDER BY `Count` DESC LIMIT $start, $number";
+             GROUP BY tags.user_id having distance < '$miles' ORDER BY `Count` DESC LIMIT $start, $number";
            }
            $stmt = $this->conn->prepare($sql);
       }
@@ -289,6 +297,124 @@ class UsersController extends BasicToken {
           TIMESTAMPDIFF(YEAR, user.date, CURDATE()) >= $start_age AND TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $end_age
           AND user.gender = '$gender'
            ORDER BY distance ASC LIMIT $start, $number");
+      }
+      else if ($this->parsedBody['sort'] == 'preference' && isset($this->parsedBody['gender']) &&
+            isset($this->parsedBody['start_age']) && isset($this->parsedBody['end_age']) &&
+          isset($this->parsedBody['start_rate']) && isset($this->parsedBody['end_rate'])
+          && isset($this->parsedBody['param']) && isset($this->parsedBody['km']) &&
+        isset($this->parsedBody['longitude']) && isset($this->parsedBody['latitude'])){
+
+          $gender = $this->parsedBody['gender'];
+          $tmp = json_decode($this->parsedBody['param'], true);
+          $tags = array();
+          if (!$tmp){
+            $tags = array();
+          }
+          else
+            $tags = $tmp;
+          $count = count($tags);
+
+          $like = "";
+          if ($count == 1 || $count > 1){
+            $like = "HAVING tags LIKE '%".$tags[0]."%'";
+          }
+          if ($count > 1){
+            for($i = 1; $i < $count; $i++){
+              $like .= " AND tags LIKE '%".$tags[$i]."%'";
+            }
+          }
+          if ($gender == 'B'){
+            $gender = " WHERE (user.gender = 'M' OR user.gender = 'F') ";
+          }else{
+            if ($gender == "M")
+              $gender = " WHERE user.gender = 'M' ";
+            else if ($gender == "F")
+              $gender = " WHERE user.gender = 'F' ";
+            else
+              $gender = " WHERE ";
+          }
+          $age_start = $this->parsedBody['start_age'];
+          $age_end = $this->parsedBody['end_age'];
+          $age_sql = " AND TIMESTAMPDIFF(YEAR, user.date, CURDATE()) > $age_start and TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $age_end ";
+          $lat = $this->parsedBody['latitude'];
+          $lon = $this->parsedBody['longitude'];
+          $loc = "";
+          $start_rate = $this->parsedBody['start_rate'];
+          $end_rate = $this->parsedBody['end_rate'];
+          $km = $this->parsedBody['km'];
+          if ($count < 1){
+            $loc = "having distance < $km";
+          }
+          else{
+            $loc = " AND distance < $km";
+          }
+          $sql = "select (1.6 * 3959 * acos( cos( radians('$lat') ) *
+                  cos( radians( location.latitude ) ) *
+                  cos( radians( location.longitude ) -
+                  radians('$lon') ) +
+                  sin( radians('$lat') ) *
+                  sin( radians( location.latitude ) ) ) )
+                  AS distance, fotos.all_foto, fotos.avatar,
+                  user.*, (select GROUP_CONCAT(tags.tags) from tags where tags.user_id=user.id) as tags
+                  from user left join location on location.user_id=user.id left join fotos ON fotos.id_user=user.id
+                  $gender and user.rate >= $start_rate and user.rate < $end_rate $age_sql $like $loc";
+          $stmt = $this->conn->prepare($sql);
+          echo "\n\n$sql\n\n";
+      }
+      else if ($this->parsedBody['sort'] == 'preference'){
+        $stmt = $this->conn->prepare("select user.*, GROUP_CONCAT(DISTINCT tags.tags) as tags, location.latitude, location.longitude from user
+                                      join tags on tags.user_id=user.id
+                                      left join location on location.user_id=user.id Where user.id = ?");
+        $stmt->execute([$this->parsedBody['id']]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $gender = $row['sex_preference'];
+        $age = $row['age'];
+        $tags = explode(',', $row['tags']);
+        $count = count($tags);
+
+        $like = "";
+        if ($count == 1 || $count > 1){
+          $like = "HAVING tags LIKE '%".$tags[0]."%'";
+        }
+        if ($count > 1){
+          for($i = 1; $i < $count; $i++){
+            $like .= " AND tags LIKE '%".$tags[$i]."%'";
+          }
+        }
+        if ($gender == 'B'){
+          $gender = " WHERE (user.gender = 'M' OR user.gender = 'F') ";
+        }else{
+          if ($gender == "M")
+            $gender = " WHERE user.gender = 'M' ";
+          else if ($gender == "F")
+            $gender = " WHERE user.gender = 'F' ";
+          else
+            $gender = " WHERE ";
+        }
+        $age_start = $age - 5;
+        $age_end = $age + 5;
+        $age_sql = " AND TIMESTAMPDIFF(YEAR, user.date, CURDATE()) > $age_start and TIMESTAMPDIFF(YEAR, user.date, CURDATE()) < $age_end ";
+        $lat = $row['latitude'];
+        $lon = $row['longitude'];
+        $loc = "";
+        if ($count < 1){
+          $loc = "having distance < 50";
+        }
+        else{
+          $loc = " AND distance < 50";
+        }
+        $sql = "select (1.6 * 3959 * acos( cos( radians('$lat') ) *
+                cos( radians( location.latitude ) ) *
+                cos( radians( location.longitude ) -
+                radians('$lon') ) +
+                sin( radians('$lat') ) *
+                sin( radians( location.latitude ) ) ) )
+                AS distance, fotos.all_foto, fotos.avatar,
+                user.*, (select GROUP_CONCAT(tags.tags) from tags where tags.user_id=user.id) as tags
+                from user left join location on location.user_id=user.id left join fotos ON fotos.id_user=user.id
+                $gender and user.rate > 10 $age_sql $like $loc";
+        $stmt = $this->conn->prepare($sql);
+
       }
       else {
         $this->rt['status'] = 'ko';
